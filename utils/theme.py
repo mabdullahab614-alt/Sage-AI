@@ -234,12 +234,40 @@ section[data-testid="stSidebar"] .stButton > button:hover *{ color: var(--gold) 
 
 [data-testid="stToggle"] label div[data-checked="true"]{ background: var(--green) !important; }
 
-[data-testid="stChatInput"]{
+[data-testid="stChatInput"], [data-testid="stChatInput"] > div{
   border: 1px solid var(--line-strong) !important;
   border-radius: 4px !important;
   background: var(--bg-raised) !important;
+  box-shadow: none !important;
 }
-[data-testid="stChatInput"] textarea{ color: var(--ink) !important; }
+[data-testid="stChatInput"]:focus-within{ border-color: var(--brown) !important; outline: none !important; box-shadow: none !important; }
+[data-testid="stChatInput"] textarea{
+  background: transparent !important;
+  color: var(--ink) !important;
+  caret-color: var(--ink) !important;
+}
+[data-testid="stChatInput"] textarea::placeholder{ color: var(--ink-faint) !important; opacity: 1 !important; }
+[data-testid="stChatInput"] button{
+  background: var(--dark) !important;
+  border: none !important;
+  border-radius: 3px !important;
+}
+[data-testid="stChatInput"] button svg{ fill: var(--cream) !important; color: var(--cream) !important; }
+[data-testid="stChatInput"] button:hover{ background: var(--dark-2) !important; }
+[data-testid="stChatInput"] button:hover svg{ fill: var(--gold) !important; color: var(--gold) !important; }
+
+/* File-uploader "Browse files" button — separate from .stButton, needs its
+   own override or it inherits Streamlit's default dark-on-dark styling */
+[data-testid="stFileUploaderDropzone"] button{
+  background: var(--dark) !important;
+  color: var(--cream) !important;
+  border: 1px solid var(--dark) !important;
+  border-radius: 3px !important;
+}
+[data-testid="stFileUploaderDropzone"] button *{ color: var(--cream) !important; fill: var(--cream) !important; }
+[data-testid="stFileUploaderDropzone"] button:hover{ background: var(--dark-2) !important; border-color: var(--gold) !important; }
+[data-testid="stFileUploaderDropzone"] button:hover *{ color: var(--gold) !important; fill: var(--gold) !important; }
+[data-testid="stFileUploaderDropzone"] small, [data-testid="stFileUploaderDropzone"] span{ color: var(--ink-muted) !important; }
 
 [data-testid="stFileUploaderDropzone"]{
   background: var(--bg-raised) !important;
