@@ -233,6 +233,7 @@ section[data-testid="stSidebar"] .stButton > button:hover{ background: var(--dar
 section[data-testid="stSidebar"] .stButton > button:hover *{ color: var(--gold) !important; }
 
 [data-testid="stToggle"] label div[data-checked="true"]{ background: var(--green) !important; }
+[data-testid="stToggle"] label div[data-checked="false"]{ background: var(--bg-raised) !important; border: 1.5px solid var(--ink-faint) !important; }
 [data-testid="stToggle"] p{ color: var(--ink) !important; }
 
 [data-testid="stChatInput"], [data-testid="stChatInput"] > div{
