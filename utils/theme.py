@@ -194,9 +194,9 @@ section[data-testid="stSidebar"] h1{ color: var(--green-dark); }
 /* Buttons — solid dark fill, small radius, mono label */
 .stButton > button, .stDownloadButton > button{
   background: var(--dark) !important;
-  color: var(--gold) !important;
+  color: var(--cream) !important;
   font-family: 'IBM Plex Mono', monospace !important;
-  font-weight: 500 !important;
+  font-weight: 600 !important;
   font-size: .8rem !important;
   letter-spacing: .04em !important;
   text-transform: uppercase !important;
@@ -205,18 +205,23 @@ section[data-testid="stSidebar"] h1{ color: var(--green-dark); }
   box-shadow: none !important;
   transition: background .18s, transform .12s var(--ease) !important;
 }
+.stButton > button *, .stDownloadButton > button *{ color: var(--cream) !important; }
 .stButton > button:hover, .stDownloadButton > button:hover{
   background: var(--dark-2) !important;
-  color: var(--cream) !important;
+  color: var(--gold) !important;
+  border-color: var(--gold) !important;
   transform: translateY(-1px);
 }
+.stButton > button:hover *, .stDownloadButton > button:hover *{ color: var(--gold) !important; }
 .stButton > button:active, .stDownloadButton > button:active{ transform: translateY(1px); }
 
 section[data-testid="stSidebar"] .stButton > button{
-  background: var(--dark) !important; color: var(--gold) !important;
+  background: var(--dark) !important; color: var(--cream) !important;
   border: 1px solid var(--dark) !important;
 }
-section[data-testid="stSidebar"] .stButton > button:hover{ background: var(--dark-2) !important; color: var(--cream) !important; }
+section[data-testid="stSidebar"] .stButton > button *{ color: var(--cream) !important; }
+section[data-testid="stSidebar"] .stButton > button:hover{ background: var(--dark-2) !important; color: var(--gold) !important; border-color: var(--gold) !important; }
+section[data-testid="stSidebar"] .stButton > button:hover *{ color: var(--gold) !important; }
 
 [data-testid="stToggle"] label div[data-checked="true"]{ background: var(--green) !important; }
 
