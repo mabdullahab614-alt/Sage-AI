@@ -9,7 +9,7 @@ from utils.document_parser import parse_document, UnsupportedFileTypeError, Empt
 from utils.rag import RAGStore, build_rag_prompt
 from utils.llm import chat_completion, extract_python_code_blocks
 from utils.code_executor import execute_python
-from utils.theme import inject_theme, render_header, render_footer
+from utils.theme import inject_theme, render_header, render_hero, render_footer
 
 st.set_page_config(page_title="Sage AI", page_icon="🌿", layout="wide")
 
@@ -28,10 +28,10 @@ if "uploaded_filenames" not in st.session_state:
 
 # ---------- Sidebar: document upload ----------
 with st.sidebar:
-    st.title("🌿 Sage AI")
+    st.title("Sage AI")
     st.caption("Chat · Documents (RAG) · Code")
 
-    st.subheader("📄 Upload documents")
+    st.subheader("Upload documents")
     uploaded_files = st.file_uploader(
         "PDF, Word, Excel, CSV, or TXT",
         type=["pdf", "docx", "xlsx", "xls", "csv", "txt"],
@@ -49,19 +49,19 @@ with st.sidebar:
                         parsed["filename"], parsed["text"]
                     )
                 st.session_state.uploaded_filenames.append(uf.name)
-                st.success(f"✅ {uf.name} — {num_chunks} chunks indexed")
+                st.success(f"{uf.name} — {num_chunks} chunks indexed")
             except UnsupportedFileTypeError as e:
-                st.error(f"❌ {e}")
+                st.error(str(e))
             except EmptyDocumentError as e:
-                st.warning(f"⚠️ {e}")
+                st.warning(str(e))
             except Exception as e:
-                st.error(f"❌ Failed to process {uf.name}: {e}")
+                st.error(f"Failed to process {uf.name}: {e}")
 
     if st.session_state.uploaded_filenames:
         st.markdown("**Indexed documents:**")
         for fn in st.session_state.uploaded_filenames:
             st.markdown(f"- {fn}")
-        if st.button("🗑️ Clear documents"):
+        if st.button("Clear documents"):
             st.session_state.rag_store.clear()
             st.session_state.uploaded_filenames = []
             st.rerun()
@@ -74,22 +74,14 @@ with st.sidebar:
     )
 
     st.divider()
-    if st.button("🧹 Clear conversation"):
+    if st.button("Clear conversation"):
         st.session_state.messages = []
         st.rerun()
 
 
 # ---------- Main chat area ----------
 if not st.session_state.messages:
-    st.markdown(
-        """
-        <div class="sg-hero">
-          <h3>👋 Ask a question, upload a document, or ask for some code to get started.</h3>
-          <p>Try: <em>"Summarize this document"</em> or <em>"Write a function to check if a number is prime"</em></p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    render_hero()
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
