@@ -1,16 +1,16 @@
 """
 Sage AI — visual theme.
 
-Design language: "reading room, not a dashboard." A calm, solid forest-charcoal
-surface with a single warm gold accent (the pen/ink of an old field journal),
-a breathing leaf mark as the signature motif, and restrained 3D depth on
-interactive elements rather than blanket glassmorphism. The header is the one
-place that gets a real glass treatment (frosted, sticky, floating above the
-scroll) — everything else uses solid, opaque surfaces so text stays crisp.
+Design language: "a naturalist's field notebook, drafted like a blueprint."
+Deep cyanotype blue instead of the usual near-black chat-app dark mode. A
+single hand-drawn line-art leaf diagram (no emoji) stands in for the brand
+mark, echoed as a faint watermark. Cards are framed like technical-drawing
+callouts with corner registration marks. The footer is built as an actual
+engineering title block — labelled cells, not a generic link list.
 
 Usage (top of app.py, right after st.set_page_config):
 
-    from utils.theme import inject_theme, render_header, render_footer
+    from utils.theme import inject_theme, render_header, render_hero, render_footer
 
     inject_theme()
     render_header()
@@ -24,310 +24,220 @@ GITHUB_URL = "https://github.com/mabdullahab614-alt/Sage-AI"
 LIVE_URL = "https://sage-ai-q9bvrp6nmajtrxp9rp9zna.streamlit.app"
 AUTHOR = "Abdullah Javed"
 
+# A drawn botanical line diagram — center vein + side veins, stroke only.
+# Reused everywhere instead of an emoji leaf.
+LEAF_SVG = """
+<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="sg-leaf-svg">
+  <path d="M16 3.5C9.6 7.4 5.6 13.8 5.6 19.6c0 5.1 4.6 8.9 10.4 8.9s10.4-3.8 10.4-8.9C26.4 13.8 22.4 7.4 16 3.5z"
+        stroke="currentColor" stroke-width="1.3"/>
+  <path d="M16 6.5v20.5" stroke="currentColor" stroke-width=".9"/>
+  <path d="M16 11.5l-4.6 2.8M16 11.5l4.6 2.8M16 17.5l-4 2.4M16 17.5l4 2.4M16 23l-3 1.9M16 23l3 1.9"
+        stroke="currentColor" stroke-width=".7"/>
+</svg>
+"""
+
 _CSS = """
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <style>
 :root{
-  --bg:            #0e1512;
-  --bg-raised:     #161f1a;
-  --bg-raised-2:   #1d2921;
-  --sage:          #4f7a5c;
-  --sage-light:    #8db097;
-  --gold:          #cf9f3f;
-  --gold-bright:   #e7bf68;
-  --ink:           #f1ede2;
-  --ink-muted:     #9fab9f;
-  --ink-faint:     #6d786e;
-  --border:        rgba(207,159,63,0.16);
-  --border-soft:   rgba(241,237,226,0.08);
+  --bg:            #0f2334;
+  --bg-raised:     #163149;
+  --bg-raised-2:   #1c3c58;
+  --ink:           #eef1e8;
+  --ink-muted:     #93a9b6;
+  --ink-faint:     #5d7383;
+  --brass:         #c88a34;
+  --brass-bright:  #e2a950;
+  --line:          rgba(238,241,232,0.10);
+  --line-strong:   rgba(238,241,232,0.24);
   --shadow-1:      0 1px 2px rgba(0,0,0,.35);
-  --shadow-2:      0 8px 24px rgba(0,0,0,.38);
-  --shadow-3:      0 18px 40px rgba(0,0,0,.45);
-  --ease:          cubic-bezier(.22,.9,.32,1.15);
+  --shadow-2:      0 10px 26px rgba(0,0,0,.38);
+  --ease:          cubic-bezier(.2,.75,.3,1);
 }
 
 @media (prefers-reduced-motion: reduce){
   *{ animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
 }
 
-html, body, [class*="css"]{
-  font-family: 'Inter', -apple-system, sans-serif;
-}
+html, body, [class*="css"]{ font-family: 'IBM Plex Sans', sans-serif; }
 
 .stApp{
-  background:
-    radial-gradient(1200px 600px at 15% -10%, rgba(79,122,92,.16), transparent 60%),
-    radial-gradient(900px 500px at 100% 0%, rgba(207,159,63,.08), transparent 55%),
-    var(--bg);
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 34px 34px;
   color: var(--ink);
 }
 
 section[data-testid="stSidebar"]{
   background: var(--bg-raised);
-  border-right: 1px solid var(--border-soft);
+  border-right: 1px solid var(--line-strong);
 }
 section[data-testid="stSidebar"] *{ color: var(--ink); }
 
-.block-container{ padding-top: 1rem; max-width: 980px; }
+.block-container{ padding-top: 1rem; max-width: 960px; }
 
-/* Scrollbar */
-::-webkit-scrollbar{ width: 10px; height: 10px; }
+::-webkit-scrollbar{ width: 9px; height: 9px; }
 ::-webkit-scrollbar-track{ background: var(--bg); }
-::-webkit-scrollbar-thumb{ background: var(--bg-raised-2); border-radius: 8px; border: 2px solid var(--bg); }
-::-webkit-scrollbar-thumb:hover{ background: var(--sage); }
+::-webkit-scrollbar-thumb{ background: var(--bg-raised-2); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover{ background: var(--brass); }
+:focus-visible{ outline: 1.5px solid var(--brass-bright); outline-offset: 2px; }
 
-:focus-visible{ outline: 2px solid var(--gold-bright); outline-offset: 2px; border-radius: 4px; }
+.sg-leaf-svg{ width: 100%; height: 100%; color: var(--brass-bright); display: block; }
 
-/* ---------------------------------------------------------------- */
-/* Motion                                                            */
-/* ---------------------------------------------------------------- */
-@keyframes breathe{
-  0%,100%{ transform: scale(1) rotate(-2deg); filter: drop-shadow(0 0 0 rgba(207,159,63,0)); }
-  50%{ transform: scale(1.07) rotate(1deg); filter: drop-shadow(0 0 10px rgba(207,159,63,.45)); }
-}
-@keyframes fadeUp{
-  from{ opacity: 0; transform: translateY(10px); }
-  to{ opacity: 1; transform: translateY(0); }
-}
-@keyframes floatIn{
-  from{ opacity: 0; transform: translateY(-6px); }
-  to{ opacity: 1; transform: translateY(0); }
-}
-@keyframes pulseDot{
-  0%{ box-shadow: 0 0 0 0 rgba(143,196,146,.55); }
-  70%{ box-shadow: 0 0 0 7px rgba(143,196,146,0); }
-  100%{ box-shadow: 0 0 0 0 rgba(143,196,146,0); }
-}
-@keyframes shimmer{
-  0%{ background-position: -200% 0; }
-  100%{ background-position: 200% 0; }
-}
+@keyframes floatIn{ from{ opacity:0; transform: translateY(-6px);} to{ opacity:1; transform: translateY(0);} }
+@keyframes fadeUp{ from{ opacity:0; transform: translateY(8px);} to{ opacity:1; transform: translateY(0);} }
+@keyframes blink{ 0%,49%{ opacity:1;} 50%,100%{ opacity:0;} }
+@keyframes sway{ 0%,100%{ transform: rotate(-3deg);} 50%{ transform: rotate(3deg);} }
 
 /* ---------------------------------------------------------------- */
-/* Header — the one glass surface                                    */
+/* Corner-bracket frame — the shared "technical drawing" motif       */
+/* ---------------------------------------------------------------- */
+.sg-frame{ position: relative; }
+.sg-frame::before, .sg-frame::after{
+  content: ""; position: absolute; width: 12px; height: 12px;
+  border: 1.5px solid var(--brass); opacity: .8; transition: width .25s var(--ease), height .25s var(--ease);
+}
+.sg-frame::before{ top: -1px; left: -1px; border-right: none; border-bottom: none; }
+.sg-frame::after{ bottom: -1px; right: -1px; border-left: none; border-top: none; }
+.sg-frame:hover::before, .sg-frame:hover::after{ width: 18px; height: 18px; }
+
+/* ---------------------------------------------------------------- */
+/* Header — instrument panel, not a glass navbar                     */
 /* ---------------------------------------------------------------- */
 .sg-header{
-  position: sticky;
-  top: 0;
-  z-index: 999;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin: -1rem -1rem 1.5rem -1rem;
-  padding: .85rem 1.5rem;
-  background: rgba(20,28,23,.62);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-  border-bottom: 1px solid var(--border);
-  box-shadow: var(--shadow-2);
+  position: sticky; top: 0; z-index: 999;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  margin: -1rem -1rem 1.6rem -1rem;
+  padding: .9rem 1.5rem;
+  background: rgba(15,35,52,.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line-strong);
   animation: floatIn .5s var(--ease);
 }
-.sg-brand{ display: flex; align-items: center; gap: .7rem; }
-.sg-mark{
-  font-size: 1.6rem;
-  line-height: 1;
-  display: inline-block;
-  animation: breathe 4.5s ease-in-out infinite;
-  filter: drop-shadow(0 2px 3px rgba(0,0,0,.4));
+.sg-brand{ display: flex; align-items: center; gap: .8rem; }
+.sg-brand-mark{
+  width: 34px; height: 34px; padding: 6px; border: 1px solid var(--line-strong); border-radius: 3px;
+  animation: sway 6s ease-in-out infinite; transform-origin: 50% 90%;
 }
 .sg-word{
-  font-family: 'Fraunces', serif;
-  font-weight: 600;
-  font-size: 1.35rem;
-  letter-spacing: .01em;
-  color: var(--ink);
-  background: linear-gradient(90deg, var(--ink) 40%, var(--gold-bright) 48%, var(--ink) 56%);
-  background-size: 250% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
+  font-family: 'Newsreader', serif; font-weight: 600; font-size: 1.3rem;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--ink); line-height: 1;
 }
-.sg-brand:hover .sg-word{ animation: shimmer 2.2s linear infinite; }
 .sg-tag{
-  font-family: 'JetBrains Mono', monospace;
-  font-size: .68rem;
-  color: var(--ink-faint);
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  margin-top: 2px;
+  font-family: 'IBM Plex Mono', monospace; font-size: .66rem; color: var(--ink-faint);
+  letter-spacing: .08em; text-transform: uppercase; margin-top: 3px;
 }
-.sg-pills{ display: flex; align-items: center; gap: .5rem; }
-.sg-pill{
-  font-family: 'JetBrains Mono', monospace;
-  font-size: .68rem;
-  letter-spacing: .04em;
-  color: var(--ink-muted);
-  background: rgba(255,255,255,.03);
-  border: 1px solid var(--border-soft);
-  padding: .3rem .65rem;
-  border-radius: 999px;
-  transition: transform .2s var(--ease), border-color .2s, color .2s;
-}
-.sg-pill:hover{ transform: translateY(-2px); border-color: var(--gold); color: var(--gold-bright); }
 .sg-status{
-  display: flex; align-items: center; gap: .4rem;
-  font-family: 'JetBrains Mono', monospace; font-size: .68rem; color: var(--sage-light);
+  font-family: 'IBM Plex Mono', monospace; font-size: .68rem; letter-spacing: .04em;
+  color: var(--ink-muted); border: 1px solid var(--line-strong); padding: .3rem .6rem;
 }
-.sg-dot{ width: 7px; height: 7px; border-radius: 50%; background: #8fc492; animation: pulseDot 2.2s infinite; }
-
-@media (max-width: 640px){
-  .sg-pills{ display: none; }
-}
+.sg-status .sg-cursor{ display:inline-block; color: var(--brass-bright); animation: blink 1.1s step-end infinite; }
+@media (max-width: 640px){ .sg-status{ display: none; } }
 
 /* ---------------------------------------------------------------- */
-/* Cards / surfaces                                                  */
+/* Hero / field-note card                                            */
 /* ---------------------------------------------------------------- */
 .sg-hero{
-  background: linear-gradient(165deg, var(--bg-raised) 0%, var(--bg-raised-2) 100%);
-  border: 1px solid var(--border-soft);
-  border-left: 3px solid var(--sage);
-  border-radius: 14px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line-strong);
   padding: 1.4rem 1.6rem;
-  box-shadow: var(--shadow-2);
   animation: fadeUp .5s var(--ease);
-  transition: transform .35s var(--ease), box-shadow .35s var(--ease);
 }
-.sg-hero:hover{ transform: translateY(-3px) perspective(600px) rotateX(1deg); box-shadow: var(--shadow-3); }
-.sg-hero h3{ margin: 0 0 .3rem 0; font-family: 'Fraunces', serif; font-weight: 600; }
-.sg-hero p{ margin: 0; color: var(--ink-muted); font-size: .92rem; }
+.sg-hero .sg-tag{ margin-bottom: .5rem; }
+.sg-hero h3{ margin: 0 0 .35rem 0; font-family: 'Newsreader', serif; font-weight: 500; font-size: 1.15rem; }
+.sg-hero p{ margin: 0; color: var(--ink-muted); font-size: .9rem; }
 
 /* Chat bubbles */
 [data-testid="stChatMessage"]{
   background: var(--bg-raised) !important;
-  border: 1px solid var(--border-soft);
-  border-radius: 12px;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: 2px !important;
   box-shadow: var(--shadow-1);
-  animation: fadeUp .35s var(--ease);
-  transition: box-shadow .25s var(--ease), transform .25s var(--ease);
+  animation: fadeUp .3s var(--ease);
 }
-[data-testid="stChatMessage"]:hover{ box-shadow: var(--shadow-2); transform: translateY(-1px); }
 
-/* Buttons — solid, with a physical 3D press */
+/* Buttons — stamped brass label, not a glossy 3D pill */
 .stButton > button, .stDownloadButton > button{
-  background: linear-gradient(180deg, var(--gold-bright), var(--gold)) !important;
-  color: #1c1206 !important;
-  font-weight: 600 !important;
-  border: none !important;
-  border-radius: 10px !important;
-  box-shadow: 0 3px 0 #8a6a25, var(--shadow-1) !important;
-  transition: transform .12s var(--ease), box-shadow .12s var(--ease) !important;
+  background: var(--brass) !important;
+  color: #17110a !important;
+  font-family: 'IBM Plex Mono', monospace !important;
+  font-weight: 500 !important;
+  font-size: .8rem !important;
+  letter-spacing: .04em !important;
+  text-transform: uppercase !important;
+  border: 1px solid var(--brass) !important;
+  border-radius: 2px !important;
+  box-shadow: none !important;
+  transition: background .18s, transform .12s var(--ease) !important;
 }
 .stButton > button:hover, .stDownloadButton > button:hover{
-  transform: translateY(-2px);
-  box-shadow: 0 5px 0 #8a6a25, var(--shadow-2) !important;
+  background: var(--brass-bright) !important;
+  transform: translateY(-1px);
 }
-.stButton > button:active, .stDownloadButton > button:active{
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 #8a6a25 !important;
-}
+.stButton > button:active, .stDownloadButton > button:active{ transform: translateY(1px); }
 
-/* Secondary / sidebar buttons keep it quiet */
 section[data-testid="stSidebar"] .stButton > button{
-  background: var(--bg-raised-2) !important;
-  color: var(--ink) !important;
-  box-shadow: var(--shadow-1) !important;
-  border: 1px solid var(--border-soft) !important;
+  background: var(--bg-raised-2) !important; color: var(--ink) !important;
+  border: 1px solid var(--line-strong) !important;
 }
-section[data-testid="stSidebar"] .stButton > button:hover{
-  border-color: var(--gold) !important;
-  box-shadow: var(--shadow-2) !important;
-}
+section[data-testid="stSidebar"] .stButton > button:hover{ border-color: var(--brass) !important; }
 
-/* Toggle accent */
-[data-testid="stToggle"] label div[data-checked="true"]{ background: var(--sage) !important; }
+[data-testid="stToggle"] label div[data-checked="true"]{ background: var(--brass) !important; }
 
-/* Chat input */
 [data-testid="stChatInput"]{
-  border: 1px solid var(--border-soft) !important;
-  border-radius: 12px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: 2px !important;
   background: var(--bg-raised) !important;
-  box-shadow: var(--shadow-2) !important;
 }
 
-/* File uploader card */
 [data-testid="stFileUploaderDropzone"]{
   background: var(--bg-raised) !important;
-  border: 1px dashed var(--border) !important;
-  border-radius: 12px !important;
-  transition: border-color .2s, transform .2s var(--ease);
+  border: 1px dashed var(--line-strong) !important;
+  border-radius: 2px !important;
+  transition: border-color .2s;
 }
-[data-testid="stFileUploaderDropzone"]:hover{ border-color: var(--gold-bright) !important; transform: translateY(-2px); }
+[data-testid="stFileUploaderDropzone"]:hover{ border-color: var(--brass) !important; }
 
 /* ---------------------------------------------------------------- */
-/* Footer — solid, structured, multi-column                          */
+/* Footer — an engineering drawing title block                       */
 /* ---------------------------------------------------------------- */
-.sg-footer{
-  margin: 3rem -1rem -1rem -1rem;
-  padding: 2.2rem 1.6rem 1.4rem 1.6rem;
+.sg-footer{ margin: 3rem -1rem -1rem -1rem; padding: 0 1.5rem 1.4rem 1.5rem; }
+.sg-titleblock{
+  max-width: 960px; margin: 0 auto;
+  border: 1px solid var(--line-strong);
   background: var(--bg-raised);
-  border-top: 1px solid transparent;
-  border-image: linear-gradient(90deg, transparent, var(--gold), transparent) 1;
-  box-shadow: 0 -10px 30px rgba(0,0,0,.25);
 }
-.sg-footer-grid{
-  display: grid;
-  grid-template-columns: 1.3fr 1fr 1fr;
-  gap: 2rem;
-  max-width: 980px;
-  margin: 0 auto;
+.sg-tb-head{
+  display: flex; align-items: center; gap: .6rem;
+  padding: .7rem 1rem; border-bottom: 1px solid var(--line-strong);
 }
-@media (max-width: 700px){ .sg-footer-grid{ grid-template-columns: 1fr; } }
-
-.sg-footer h4{
-  font-family: 'Fraunces', serif;
-  font-size: .95rem;
-  color: var(--ink);
-  margin: 0 0 .6rem 0;
+.sg-tb-head .sg-brand-mark{ width: 22px; height: 22px; padding: 3px; animation: none; }
+.sg-tb-head span{
+  font-family: 'IBM Plex Mono', monospace; font-size: .7rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--ink-muted);
 }
-.sg-footer p, .sg-footer li{
-  color: var(--ink-muted);
-  font-size: .85rem;
-  line-height: 1.6;
+.sg-tb-grid{ display: grid; grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 700px){ .sg-tb-grid{ grid-template-columns: repeat(2, 1fr); } }
+.sg-tb-cell{ padding: .9rem 1rem; border-right: 1px solid var(--line-strong); border-top: 1px solid var(--line-strong); }
+.sg-tb-cell:nth-child(4n){ border-right: none; }
+.sg-tb-label{
+  font-family: 'IBM Plex Mono', monospace; font-size: .62rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ink-faint); margin-bottom: .3rem; display: block;
 }
-.sg-footer ul{ list-style: none; padding: 0; margin: 0; }
-.sg-footer li{ display: flex; align-items: center; gap: .45rem; margin-bottom: .35rem; }
-.sg-footer li::before{ content: "◆"; color: var(--sage-light); font-size: .5rem; }
-
-.sg-footer-links a{
-  display: inline-flex;
-  align-items: center;
-  gap: .4rem;
-  color: var(--ink);
-  text-decoration: none;
-  font-size: .85rem;
-  padding: .4rem .7rem;
-  margin: 0 .3rem .4rem 0;
-  border: 1px solid var(--border-soft);
-  border-radius: 8px;
-  background: var(--bg-raised-2);
-  transition: transform .2s var(--ease), border-color .2s, box-shadow .2s var(--ease);
+.sg-tb-value{ font-size: .85rem; color: var(--ink); line-height: 1.5; }
+.sg-tb-value a{ color: var(--brass-bright); text-decoration: none; border-bottom: 1px solid rgba(226,169,80,.35); }
+.sg-tb-value a:hover{ border-color: var(--brass-bright); }
+.sg-tb-bottom{
+  padding: .55rem 1rem; border-top: 1px solid var(--line-strong);
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: .4rem;
+  font-family: 'IBM Plex Mono', monospace; font-size: .65rem; color: var(--ink-faint);
 }
-.sg-footer-links a:hover{
-  transform: translateY(-2px);
-  border-color: var(--gold);
-  box-shadow: var(--shadow-2);
-  color: var(--gold-bright);
-}
-
-.sg-footer-bottom{
-  max-width: 980px;
-  margin: 1.6rem auto 0 auto;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-soft);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: .5rem;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: .72rem;
-  color: var(--ink-faint);
-}
-.sg-footer-bottom .sg-mark{ font-size: 1rem; margin-right: .3rem; animation-duration: 6s; }
-</style>
 """
 
 
@@ -337,23 +247,32 @@ def inject_theme() -> None:
 
 
 def render_header() -> None:
-    """Sticky, frosted-glass header with the breathing leaf mark and feature pills."""
+    """Sticky instrument-panel header with the drawn leaf mark and a terminal-style status tag."""
     st.markdown(
-        """
+        f"""
         <div class="sg-header">
           <div class="sg-brand">
-            <span class="sg-mark">🌿</span>
+            <div class="sg-brand-mark">{LEAF_SVG}</div>
             <div>
               <div class="sg-word">Sage AI</div>
-              <div class="sg-tag">document &amp; code intelligence</div>
+              <div class="sg-tag">Document &amp; Code Intelligence</div>
             </div>
           </div>
-          <div class="sg-pills">
-            <span class="sg-pill">Chat</span>
-            <span class="sg-pill">Documents · RAG</span>
-            <span class="sg-pill">Code Exec</span>
-          </div>
-          <div class="sg-status"><span class="sg-dot"></span>Online</div>
+          <div class="sg-status">STATUS: ACTIVE<span class="sg-cursor">▌</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_hero() -> None:
+    """Field-note style welcome card, framed like a diagram callout."""
+    st.markdown(
+        """
+        <div class="sg-hero sg-frame">
+          <div class="sg-tag">Field Note — Getting Started</div>
+          <h3>Ask a question, upload a document, or ask for some code.</h3>
+          <p>Try: "Summarize this document" or "Write a function to check if a number is prime"</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -361,36 +280,53 @@ def render_header() -> None:
 
 
 def render_footer() -> None:
-    """Solid, structured multi-column footer."""
+    """Footer built as an engineering-drawing title block instead of a generic link list."""
     st.markdown(
         f"""
         <div class="sg-footer">
-          <div class="sg-footer-grid">
-            <div>
-              <h4>🌿 Sage AI</h4>
-              <p>A single-page assistant for grounded conversation, document
-              understanding, and Python you can actually run — built to stay
-              out of your way and get the answer right.</p>
+          <div class="sg-titleblock">
+            <div class="sg-tb-head">
+              <div class="sg-brand-mark">{LEAF_SVG}</div>
+              <span>Sage AI — Title Block</span>
             </div>
-            <div>
-              <h4>Capabilities</h4>
-              <ul>
-                <li>General chat with memory</li>
-                <li>RAG over PDF · Word · Excel · CSV</li>
-                <li>Python generation &amp; sandboxed execution</li>
-              </ul>
-            </div>
-            <div>
-              <h4>Connect</h4>
-              <div class="sg-footer-links">
-                <a href="{GITHUB_URL}" target="_blank">↗ Source on GitHub</a>
-                <a href="{LIVE_URL}" target="_blank">↗ Live demo</a>
+            <div class="sg-tb-grid">
+              <div class="sg-tb-cell">
+                <span class="sg-tb-label">Project</span>
+                <div class="sg-tb-value">Sage AI — document &amp; code assistant</div>
+              </div>
+              <div class="sg-tb-cell">
+                <span class="sg-tb-label">Modules</span>
+                <div class="sg-tb-value">Chat · RAG · Code Exec</div>
+              </div>
+              <div class="sg-tb-cell">
+                <span class="sg-tb-label">Stack</span>
+                <div class="sg-tb-value">Groq · Streamlit · ChromaDB</div>
+              </div>
+              <div class="sg-tb-cell">
+                <span class="sg-tb-label">Drawn By</span>
+                <div class="sg-tb-value">{AUTHOR}</div>
+              </div>
+              <div class="sg-tb-cell">
+                <span class="sg-tb-label">Rev</span>
+                <div class="sg-tb-value">2026.1</div>
+              </div>
+              <div class="sg-tb-cell">
+                <span class="sg-tb-label">Source</span>
+                <div class="sg-tb-value"><a href="{GITHUB_URL}" target="_blank">GitHub ↗</a></div>
+              </div>
+              <div class="sg-tb-cell">
+                <span class="sg-tb-label">Live</span>
+                <div class="sg-tb-value"><a href="{LIVE_URL}" target="_blank">Demo ↗</a></div>
+              </div>
+              <div class="sg-tb-cell">
+                <span class="sg-tb-label">License</span>
+                <div class="sg-tb-value">Personal project</div>
               </div>
             </div>
-          </div>
-          <div class="sg-footer-bottom">
-            <span><span class="sg-mark">🌿</span>© 2026 Sage AI — built by {AUTHOR}</span>
-            <span>Powered by Groq · Streamlit · ChromaDB</span>
+            <div class="sg-tb-bottom">
+              <span>© 2026 SAGE AI</span>
+              <span>SHEET 1 OF 1</span>
+            </div>
           </div>
         </div>
         """,
