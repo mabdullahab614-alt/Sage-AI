@@ -95,7 +95,16 @@ section[data-testid="stSidebar"]{
 section[data-testid="stSidebar"] *{ color: var(--ink); }
 section[data-testid="stSidebar"] h1{ color: var(--green-dark); }
 
-.block-container{ padding-top: 1.5rem; max-width: 960px; }
+.block-container{ padding-top: 1.5rem; padding-bottom: 6rem; max-width: 960px; }
+
+/* Streamlit's fixed bottom bar that holds the chat input — retheme it so it
+   doesn't sit there as an unstyled black strip, and stop it covering the
+   last rows of page content (like the footer title block) as you scroll. */
+div[data-testid="stBottom"], .stChatFloatingInputContainer{
+  background: var(--bg) !important;
+  border-top: 1px solid var(--line-strong) !important;
+}
+div[data-testid="stBottom"] > div{ background: var(--bg) !important; }
 
 ::-webkit-scrollbar{ width: 9px; height: 9px; }
 ::-webkit-scrollbar-track{ background: var(--bg); }
