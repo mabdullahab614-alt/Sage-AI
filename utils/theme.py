@@ -1,12 +1,18 @@
 """
 Sage AI — visual theme.
 
-Design language: "a naturalist's field notebook, drafted like a blueprint."
-Deep cyanotype blue instead of the usual near-black chat-app dark mode. A
-single hand-drawn line-art leaf diagram (no emoji) stands in for the brand
-mark, echoed as a faint watermark. Cards are framed like technical-drawing
-callouts with corner registration marks. The footer is built as an actual
-engineering title block — labelled cells, not a generic link list.
+Design language: "a naturalist's field notebook, drafted like a blueprint" —
+now in a light parchment palette instead of dark. Solid, opaque fills
+throughout (no glass/blur, no gradients) in cream, deep sage green, and
+walnut brown. A drawn line-art leaf diagram stands in for the brand mark.
+Cards are framed like technical-drawing callouts with corner registration
+marks. The footer is an engineering title block.
+
+The header is a normal (non-sticky) block with generous height and a solid
+background — earlier versions used `position: sticky` plus a negative
+edge-bleed margin, which on Streamlit Cloud fought with the platform's own
+fixed toolbar and made the header disappear. This version just sits in
+normal document flow, tall and unmissable.
 
 Usage (top of app.py, right after st.set_page_config):
 
@@ -25,7 +31,6 @@ LIVE_URL = "https://sage-ai-q9bvrp6nmajtrxp9rp9zna.streamlit.app"
 AUTHOR = "Abdullah Javed"
 
 # A drawn botanical line diagram — center vein + side veins, stroke only.
-# Reused everywhere instead of an emoji leaf.
 LEAF_SVG = """
 <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="sg-leaf-svg">
   <path d="M16 3.5C9.6 7.4 5.6 13.8 5.6 19.6c0 5.1 4.6 8.9 10.4 8.9s10.4-3.8 10.4-8.9C26.4 13.8 22.4 7.4 16 3.5z"
@@ -39,22 +44,24 @@ LEAF_SVG = """
 _CSS = """
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <style>
 :root{
-  --bg:            #0f2334;
-  --bg-raised:     #163149;
-  --bg-raised-2:   #1c3c58;
-  --ink:           #eef1e8;
-  --ink-muted:     #93a9b6;
-  --ink-faint:     #5d7383;
-  --brass:         #c88a34;
-  --brass-bright:  #e2a950;
-  --line:          rgba(238,241,232,0.10);
-  --line-strong:   rgba(238,241,232,0.24);
-  --shadow-1:      0 1px 2px rgba(0,0,0,.35);
-  --shadow-2:      0 10px 26px rgba(0,0,0,.38);
+  --bg:            #f7f1e3;
+  --bg-raised:     #fffcf5;
+  --bg-raised-2:   #efe4cb;
+  --green:         #3c5a37;
+  --green-dark:    #2a4126;
+  --brown:         #7a5230;
+  --brown-dark:    #593a20;
+  --ink:           #2a2015;
+  --ink-muted:     #6c6252;
+  --ink-faint:     #978c78;
+  --line:          rgba(42,32,21,0.14);
+  --line-strong:   rgba(42,32,21,0.28);
+  --shadow-1:      0 1px 3px rgba(42,32,21,.10);
+  --shadow-2:      0 8px 22px rgba(42,32,21,.14);
   --ease:          cubic-bezier(.2,.75,.3,1);
 }
 
@@ -74,71 +81,81 @@ html, body, [class*="css"]{ font-family: 'IBM Plex Sans', sans-serif; }
 }
 
 section[data-testid="stSidebar"]{
-  background: var(--bg-raised);
+  background: var(--bg-raised-2);
   border-right: 1px solid var(--line-strong);
 }
 section[data-testid="stSidebar"] *{ color: var(--ink); }
+section[data-testid="stSidebar"] h1{ color: var(--green-dark); }
 
-.block-container{ padding-top: 1rem; max-width: 960px; }
+.block-container{ padding-top: 1.5rem; max-width: 960px; }
 
 ::-webkit-scrollbar{ width: 9px; height: 9px; }
 ::-webkit-scrollbar-track{ background: var(--bg); }
 ::-webkit-scrollbar-thumb{ background: var(--bg-raised-2); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover{ background: var(--brass); }
-:focus-visible{ outline: 1.5px solid var(--brass-bright); outline-offset: 2px; }
+::-webkit-scrollbar-thumb:hover{ background: var(--brown); }
+:focus-visible{ outline: 1.5px solid var(--brown); outline-offset: 2px; }
 
-.sg-leaf-svg{ width: 100%; height: 100%; color: var(--brass-bright); display: block; }
+.sg-leaf-svg{ width: 100%; height: 100%; color: var(--green-dark); display: block; }
 
-@keyframes floatIn{ from{ opacity:0; transform: translateY(-6px);} to{ opacity:1; transform: translateY(0);} }
 @keyframes fadeUp{ from{ opacity:0; transform: translateY(8px);} to{ opacity:1; transform: translateY(0);} }
 @keyframes blink{ 0%,49%{ opacity:1;} 50%,100%{ opacity:0;} }
 @keyframes sway{ 0%,100%{ transform: rotate(-3deg);} 50%{ transform: rotate(3deg);} }
 
 /* ---------------------------------------------------------------- */
-/* Corner-bracket frame — the shared "technical drawing" motif       */
+/* Corner-bracket frame — shared "technical drawing" motif           */
 /* ---------------------------------------------------------------- */
 .sg-frame{ position: relative; }
 .sg-frame::before, .sg-frame::after{
   content: ""; position: absolute; width: 12px; height: 12px;
-  border: 1.5px solid var(--brass); opacity: .8; transition: width .25s var(--ease), height .25s var(--ease);
+  border: 1.5px solid var(--brown); opacity: .85; transition: width .25s var(--ease), height .25s var(--ease);
 }
 .sg-frame::before{ top: -1px; left: -1px; border-right: none; border-bottom: none; }
 .sg-frame::after{ bottom: -1px; right: -1px; border-left: none; border-top: none; }
 .sg-frame:hover::before, .sg-frame:hover::after{ width: 18px; height: 18px; }
 
 /* ---------------------------------------------------------------- */
-/* Header — instrument panel, not a glass navbar                     */
+/* Header — tall, solid, sits in normal flow (no sticky/edge-bleed)  */
 /* ---------------------------------------------------------------- */
 .sg-header{
-  position: sticky; top: 0; z-index: 999;
-  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-  margin: -1rem -1rem 1.6rem -1rem;
-  padding: .9rem 1.5rem;
-  background: rgba(15,35,52,.72);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--line-strong);
-  animation: floatIn .5s var(--ease);
+  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
+  width: 100%;
+  margin: 0 0 1.8rem 0;
+  padding: 1.5rem 2rem;
+  background: var(--bg-raised);
+  border: 1px solid var(--line-strong);
+  border-left: 5px solid var(--green);
+  border-radius: 4px;
+  box-shadow: var(--shadow-2);
+  animation: fadeUp .4s var(--ease);
+  box-sizing: border-box;
 }
-.sg-brand{ display: flex; align-items: center; gap: .8rem; }
+.sg-brand{ display: flex; align-items: center; gap: 1rem; }
 .sg-brand-mark{
-  width: 34px; height: 34px; padding: 6px; border: 1px solid var(--line-strong); border-radius: 3px;
+  width: 52px; height: 52px; padding: 9px;
+  background: var(--bg-raised-2);
+  border: 1px solid var(--line-strong); border-radius: 6px;
   animation: sway 6s ease-in-out infinite; transform-origin: 50% 90%;
+  flex-shrink: 0;
 }
 .sg-word{
-  font-family: 'Newsreader', serif; font-weight: 600; font-size: 1.3rem;
-  letter-spacing: .04em; text-transform: uppercase; color: var(--ink); line-height: 1;
+  font-family: 'Newsreader', serif; font-weight: 700; font-size: 2.1rem;
+  letter-spacing: .01em; color: var(--green-dark); line-height: 1.05;
 }
 .sg-tag{
-  font-family: 'IBM Plex Mono', monospace; font-size: .66rem; color: var(--ink-faint);
-  letter-spacing: .08em; text-transform: uppercase; margin-top: 3px;
+  font-family: 'IBM Plex Mono', monospace; font-size: .72rem; color: var(--brown-dark);
+  letter-spacing: .09em; text-transform: uppercase; margin-top: 4px;
 }
 .sg-status{
-  font-family: 'IBM Plex Mono', monospace; font-size: .68rem; letter-spacing: .04em;
-  color: var(--ink-muted); border: 1px solid var(--line-strong); padding: .3rem .6rem;
+  font-family: 'IBM Plex Mono', monospace; font-size: .74rem; letter-spacing: .04em;
+  color: var(--green-dark); border: 1px solid var(--line-strong);
+  background: var(--bg-raised-2);
+  padding: .5rem .85rem; border-radius: 3px; white-space: nowrap;
 }
-.sg-status .sg-cursor{ display:inline-block; color: var(--brass-bright); animation: blink 1.1s step-end infinite; }
-@media (max-width: 640px){ .sg-status{ display: none; } }
+.sg-status .sg-cursor{ display:inline-block; color: var(--brown); animation: blink 1.1s step-end infinite; }
+@media (max-width: 680px){
+  .sg-header{ flex-direction: column; align-items: flex-start; gap: .8rem; }
+  .sg-status{ align-self: flex-start; }
+}
 
 /* ---------------------------------------------------------------- */
 /* Hero / field-note card                                            */
@@ -147,96 +164,103 @@ section[data-testid="stSidebar"] *{ color: var(--ink); }
   background: var(--bg-raised);
   border: 1px solid var(--line-strong);
   padding: 1.4rem 1.6rem;
+  border-radius: 4px;
+  box-shadow: var(--shadow-1);
   animation: fadeUp .5s var(--ease);
 }
-.sg-hero .sg-tag{ margin-bottom: .5rem; }
-.sg-hero h3{ margin: 0 0 .35rem 0; font-family: 'Newsreader', serif; font-weight: 500; font-size: 1.15rem; }
+.sg-hero .sg-tag{ margin-bottom: .5rem; color: var(--green-dark); }
+.sg-hero h3{ margin: 0 0 .35rem 0; font-family: 'Newsreader', serif; font-weight: 500; font-size: 1.2rem; color: var(--ink); }
 .sg-hero p{ margin: 0; color: var(--ink-muted); font-size: .9rem; }
 
 /* Chat bubbles */
 [data-testid="stChatMessage"]{
   background: var(--bg-raised) !important;
   border: 1px solid var(--line-strong) !important;
-  border-radius: 2px !important;
+  border-radius: 4px !important;
   box-shadow: var(--shadow-1);
   animation: fadeUp .3s var(--ease);
 }
+[data-testid="stChatMessage"] p, [data-testid="stChatMessage"] li{ color: var(--ink) !important; }
 
-/* Buttons — stamped brass label, not a glossy 3D pill */
+/* Buttons — solid fill, small radius, mono label */
 .stButton > button, .stDownloadButton > button{
-  background: var(--brass) !important;
-  color: #17110a !important;
+  background: var(--green) !important;
+  color: var(--bg-raised) !important;
   font-family: 'IBM Plex Mono', monospace !important;
   font-weight: 500 !important;
   font-size: .8rem !important;
   letter-spacing: .04em !important;
   text-transform: uppercase !important;
-  border: 1px solid var(--brass) !important;
-  border-radius: 2px !important;
+  border: 1px solid var(--green) !important;
+  border-radius: 3px !important;
   box-shadow: none !important;
   transition: background .18s, transform .12s var(--ease) !important;
 }
 .stButton > button:hover, .stDownloadButton > button:hover{
-  background: var(--brass-bright) !important;
+  background: var(--green-dark) !important;
   transform: translateY(-1px);
 }
 .stButton > button:active, .stDownloadButton > button:active{ transform: translateY(1px); }
 
 section[data-testid="stSidebar"] .stButton > button{
-  background: var(--bg-raised-2) !important; color: var(--ink) !important;
-  border: 1px solid var(--line-strong) !important;
+  background: var(--brown) !important; color: var(--bg-raised) !important;
+  border: 1px solid var(--brown) !important;
 }
-section[data-testid="stSidebar"] .stButton > button:hover{ border-color: var(--brass) !important; }
+section[data-testid="stSidebar"] .stButton > button:hover{ background: var(--brown-dark) !important; }
 
-[data-testid="stToggle"] label div[data-checked="true"]{ background: var(--brass) !important; }
+[data-testid="stToggle"] label div[data-checked="true"]{ background: var(--green) !important; }
 
 [data-testid="stChatInput"]{
   border: 1px solid var(--line-strong) !important;
-  border-radius: 2px !important;
+  border-radius: 4px !important;
   background: var(--bg-raised) !important;
 }
+[data-testid="stChatInput"] textarea{ color: var(--ink) !important; }
 
 [data-testid="stFileUploaderDropzone"]{
   background: var(--bg-raised) !important;
   border: 1px dashed var(--line-strong) !important;
-  border-radius: 2px !important;
+  border-radius: 4px !important;
   transition: border-color .2s;
 }
-[data-testid="stFileUploaderDropzone"]:hover{ border-color: var(--brass) !important; }
+[data-testid="stFileUploaderDropzone"]:hover{ border-color: var(--brown) !important; }
 
 /* ---------------------------------------------------------------- */
-/* Footer — an engineering drawing title block                       */
+/* Footer — engineering drawing title block                          */
 /* ---------------------------------------------------------------- */
-.sg-footer{ margin: 3rem -1rem -1rem -1rem; padding: 0 1.5rem 1.4rem 1.5rem; }
+.sg-footer{ margin: 3rem 0 0 0; }
 .sg-titleblock{
-  max-width: 960px; margin: 0 auto;
   border: 1px solid var(--line-strong);
   background: var(--bg-raised);
+  border-radius: 4px;
+  box-shadow: var(--shadow-1);
 }
 .sg-tb-head{
   display: flex; align-items: center; gap: .6rem;
-  padding: .7rem 1rem; border-bottom: 1px solid var(--line-strong);
+  padding: .8rem 1.1rem; border-bottom: 1px solid var(--line-strong);
+  background: var(--bg-raised-2);
+  border-radius: 4px 4px 0 0;
 }
-.sg-tb-head .sg-brand-mark{ width: 22px; height: 22px; padding: 3px; animation: none; }
+.sg-tb-head .sg-brand-mark{ width: 24px; height: 24px; padding: 3px; animation: none; background: transparent; border: none; }
 .sg-tb-head span{
-  font-family: 'IBM Plex Mono', monospace; font-size: .7rem; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--ink-muted);
+  font-family: 'IBM Plex Mono', monospace; font-size: .72rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--brown-dark);
 }
 .sg-tb-grid{ display: grid; grid-template-columns: repeat(4, 1fr); }
 @media (max-width: 700px){ .sg-tb-grid{ grid-template-columns: repeat(2, 1fr); } }
-.sg-tb-cell{ padding: .9rem 1rem; border-right: 1px solid var(--line-strong); border-top: 1px solid var(--line-strong); }
+.sg-tb-cell{ padding: .9rem 1.1rem; border-right: 1px solid var(--line-strong); border-top: 1px solid var(--line-strong); }
 .sg-tb-cell:nth-child(4n){ border-right: none; }
 .sg-tb-label{
-  font-family: 'IBM Plex Mono', monospace; font-size: .62rem; letter-spacing: .08em;
+  font-family: 'IBM Plex Mono', monospace; font-size: .64rem; letter-spacing: .08em;
   text-transform: uppercase; color: var(--ink-faint); margin-bottom: .3rem; display: block;
 }
-.sg-tb-value{ font-size: .85rem; color: var(--ink); line-height: 1.5; }
-.sg-tb-value a{ color: var(--brass-bright); text-decoration: none; border-bottom: 1px solid rgba(226,169,80,.35); }
-.sg-tb-value a:hover{ border-color: var(--brass-bright); }
+.sg-tb-value{ font-size: .87rem; color: var(--ink); line-height: 1.5; }
+.sg-tb-value a{ color: var(--green-dark); text-decoration: none; border-bottom: 1px solid var(--green); font-weight: 500; }
+.sg-tb-value a:hover{ color: var(--brown-dark); border-color: var(--brown); }
 .sg-tb-bottom{
-  padding: .55rem 1rem; border-top: 1px solid var(--line-strong);
+  padding: .6rem 1.1rem; border-top: 1px solid var(--line-strong);
   display: flex; justify-content: space-between; flex-wrap: wrap; gap: .4rem;
-  font-family: 'IBM Plex Mono', monospace; font-size: .65rem; color: var(--ink-faint);
+  font-family: 'IBM Plex Mono', monospace; font-size: .66rem; color: var(--ink-faint);
 }
 """
 
@@ -247,7 +271,7 @@ def inject_theme() -> None:
 
 
 def render_header() -> None:
-    """Sticky instrument-panel header with the drawn leaf mark and a terminal-style status tag."""
+    """Tall, solid header sitting in normal document flow — no sticky, no clipping."""
     st.markdown(
         f"""
         <div class="sg-header">
