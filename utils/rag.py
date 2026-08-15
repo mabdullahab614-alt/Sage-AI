@@ -1,6 +1,14 @@
 """
-RAG pipeline: chunk documents, embed them locally with sentence-transformers,
-store/retrieve via a local ChromaDB instance.
+RAG pipeline: chunk documents, embed them locally with ChromaDB's built-in
+ONNX-based embedding model, store/retrieve via a local ChromaDB instance.
+
+NOTE: We deliberately use ChromaDB's DefaultEmbeddingFunction (ONNX runtime,
+already a ChromaDB dependency) instead of sentence-transformers/torch. The
+torch + transformers + sentence-transformers stack is heavy enough that it
+can exceed Streamlit Community Cloud's free-tier build resources and hang
+during dependency installation. The ONNX-based MiniLM model used here is
+functionally similar (same underlying MiniLM architecture) at a fraction of
+the install footprint.
 """
 
 import uuid
@@ -15,16 +23,14 @@ except ImportError:
 
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 150
-EMBEDDING_MODEL = "all-MiniLM-L6-v2"  # small, fast, free, local
 TOP_K = 4
 
 
 class RAGStore:
     def __init__(self, persist_directory: str = "./chroma_store"):
         self.client = chromadb.PersistentClient(path=persist_directory)
-        self.embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-            model_name=EMBEDDING_MODEL
-        )
+        # Lightweight ONNX embedder (no torch/transformers needed)
+        self.embedding_fn = embedding_functions.DefaultEmbeddingFunction()
         self.collection = self.client.get_or_create_collection(
             name="sage_documents",
             embedding_function=self.embedding_fn,
