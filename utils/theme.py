@@ -48,6 +48,7 @@ _CSS = """
 
 <style>
 :root{
+  color-scheme: light;
   --bg:            #f7f1e3;
   --bg-raised:     #fffcf5;
   --bg-raised-2:   #efe4cb;
@@ -80,6 +81,7 @@ _CSS = """
 html, body, [class*="css"]{ font-family: 'IBM Plex Sans', sans-serif; }
 
 .stApp{
+  color-scheme: light;
   background-color: var(--bg);
   background-image:
     linear-gradient(var(--line) 1px, transparent 1px),
@@ -235,6 +237,17 @@ section[data-testid="stSidebar"] .stButton > button:hover *{ color: var(--gold) 
 [data-testid="stToggle"] label div[data-checked="true"]{ background: var(--green) !important; }
 [data-testid="stToggle"] label div[data-checked="false"]{ background: var(--bg-raised) !important; border: 1.5px solid var(--ink-faint) !important; }
 [data-testid="stToggle"] p{ color: var(--ink) !important; }
+[data-testid="stToggle"] *{
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+[data-testid="stToggle"] label div[role="switch"] > div,
+[data-testid="stToggle"] label div[data-checked] > div{
+  background: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(42,32,21,.3) !important;
+}
 
 [data-testid="stChatInput"], [data-testid="stChatInput"] > div{
   border: 1px solid var(--line-strong) !important;
