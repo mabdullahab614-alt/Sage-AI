@@ -1,7 +1,6 @@
 """
 Thin wrapper around the Groq API for chat + code generation.
 """
-
 import os
 from groq import Groq
 
@@ -20,6 +19,13 @@ AVAILABLE_MODELS = {
     "GPT-OSS 20B — OpenAI open-weight, fast": "openai/gpt-oss-20b",
 }
 DEFAULT_MODEL = "llama-3.3-70b-versatile"
+
+# Multimodal model — the only one in this app's lineup that can actually
+# "see" an attached image. Not listed in AVAILABLE_MODELS (the model picker
+# is for text chat); instead, app.py auto-switches to this model just for
+# the specific turn where the user attaches a photo, then goes back to
+# whatever text model was selected.
+VISION_MODEL = "qwen/qwen3.6-27b"
 
 SYSTEM_PROMPT = (
     "You are Sage, a helpful AI assistant that can chat normally, answer "
@@ -42,13 +48,16 @@ def get_client() -> Groq:
 
 def chat_completion(messages: list[dict], model: str = DEFAULT_MODEL, temperature: float = 0.4) -> str:
     """
-    messages: list of {"role": "user"|"assistant"|"system", "content": str}
+    messages: list of {"role": "user"|"assistant"|"system", "content": str | list}
+    "content" can be a plain string (normal text turn) OR a list of content
+    parts like [{"type": "text", "text": "..."}, {"type": "image_url",
+    "image_url": {"url": "data:image/png;base64,..."}}] for a multimodal
+    turn — pass VISION_MODEL as `model` when using image content parts.
     model: any Groq model id (see AVAILABLE_MODELS for the ones surfaced in the UI)
     Returns the assistant's reply text.
     """
     client = get_client()
     full_messages = [{"role": "system", "content": SYSTEM_PROMPT}] + messages
-
     response = client.chat.completions.create(
         model=model,
         messages=full_messages,
@@ -78,7 +87,6 @@ def transcribe_audio(audio_bytes: bytes, filename: str = "voice.wav") -> str:
 def extract_python_code_blocks(text: str) -> list[str]:
     """Pulls out ```python ... ``` blocks from a model response."""
     import re
-
     pattern = r"```python\s*\n(.*?)```"
     matches = re.findall(pattern, text, re.DOTALL)
     return [m.strip() for m in matches]
