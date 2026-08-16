@@ -3,8 +3,9 @@ Sage AI — Intelligent Document & Code Assistant
 Built by Abdullah Javed.
 
 Single-page Streamlit app: general chat + RAG over uploaded docs + code
-gen/execution, with multiple saved chats, model selection, and per-message
-actions (copy, regenerate, feedback).
+gen/execution, with multiple saved chats (starrable + renameable), model
+selection, an attach menu (photo / file / link), and per-message actions
+(copy, regenerate, feedback).
 """
 
 import base64
@@ -29,12 +30,14 @@ st.set_page_config(page_title=PAGE_TITLE, page_icon=PAGE_ICON, layout="wide")
 inject_theme(st)
 
 TITLE_MAX_LEN = 42
+IMAGE_TYPES = ["png", "jpg", "jpeg", "gif", "webp"]
+DOC_TYPES = ["pdf", "docx", "xlsx", "xls", "csv", "txt"]
 
 
 # ---------- Conversation helpers ----------
 def new_conversation() -> str:
     cid = str(uuid.uuid4())[:8]
-    st.session_state.conversations[cid] = {"title": "New chat", "messages": []}
+    st.session_state.conversations[cid] = {"title": "New chat", "messages": [], "starred": False}
     st.session_state.current_id = cid
     return cid
 
@@ -127,6 +130,16 @@ if "selected_model" not in st.session_state:
     st.session_state.selected_model = DEFAULT_MODEL
 if "last_audio_hash" not in st.session_state:
     st.session_state.last_audio_hash = None
+if "renaming_id" not in st.session_state:
+    st.session_state.renaming_id = None
+if "pending_files" not in st.session_state:
+    st.session_state.pending_files = []          # list of UploadedFile objects, queued via "+"
+if "pending_links" not in st.session_state:
+    st.session_state.pending_links = []           # list of url strings, queued via "+"
+
+# Backfill "starred" on conversations created before this feature existed.
+for _conv in st.session_state.conversations.values():
+    _conv.setdefault("starred", False)
 
 current_conv = st.session_state.conversations[st.session_state.current_id]
 messages = current_conv["messages"]
@@ -145,34 +158,66 @@ with st.sidebar:
         st.rerun()
 
     st.markdown('<p class="sage-eyebrow">Chats</p>', unsafe_allow_html=True)
-    for cid, conv in list(st.session_state.conversations.items())[::-1]:
-        is_active = cid == st.session_state.current_id
-        c1, c2 = st.columns([5, 1])
-        with c1:
-            if st.button(
-                conv["title"] or "New chat",
-                key=f"switch_{cid}",
-                use_container_width=True,
-                type="primary" if is_active else "secondary",
-            ):
-                st.session_state.current_id = cid
-                st.rerun()
-        with c2:
-            if st.button("×", key=f"del_{cid}", help="Delete this chat"):
-                del st.session_state.conversations[cid]
-                if not st.session_state.conversations:
-                    new_conversation()
-                elif st.session_state.current_id == cid:
-                    st.session_state.current_id = next(iter(st.session_state.conversations))
-                st.rerun()
+
+    # Starred chats float to the top; within each group, most-recent-first.
+    chat_items = list(st.session_state.conversations.items())[::-1]
+    chat_items.sort(key=lambda kv: not kv[1].get("starred", False))
+
+    for cid, conv in chat_items:
+        if st.session_state.renaming_id == cid:
+            # ---- Rename mode: text input + save/cancel ----
+            new_title = st.text_input(
+                "Rename chat", value=conv["title"], key=f"rename_input_{cid}",
+                label_visibility="collapsed",
+            )
+            rc1, rc2 = st.columns(2)
+            with rc1:
+                if st.button("Save", key=f"save_{cid}", use_container_width=True):
+                    conv["title"] = new_title.strip() or "New chat"
+                    st.session_state.renaming_id = None
+                    st.rerun()
+            with rc2:
+                if st.button("Cancel", key=f"cancel_{cid}", use_container_width=True):
+                    st.session_state.renaming_id = None
+                    st.rerun()
+        else:
+            is_active = cid == st.session_state.current_id
+            c_star, c_title, c_rename, c_del = st.columns([0.8, 4, 0.8, 0.8])
+            with c_star:
+                st.markdown('<div class="sage-chatrow-icon">', unsafe_allow_html=True)
+                star_label = "⭐" if conv.get("starred") else "☆"
+                if st.button(star_label, key=f"star_{cid}", help="Star this chat", use_container_width=True):
+                    conv["starred"] = not conv.get("starred", False)
+                    st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
+            with c_title:
+                if st.button(
+                    conv["title"] or "New chat",
+                    key=f"switch_{cid}",
+                    use_container_width=True,
+                    type="primary" if is_active else "secondary",
+                ):
+                    st.session_state.current_id = cid
+                    st.rerun()
+            with c_rename:
+                st.markdown('<div class="sage-chatrow-icon">', unsafe_allow_html=True)
+                if st.button("✏️", key=f"ren_{cid}", help="Rename this chat", use_container_width=True):
+                    st.session_state.renaming_id = cid
+                    st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
+            with c_del:
+                st.markdown('<div class="sage-chatrow-icon">', unsafe_allow_html=True)
+                if st.button("×", key=f"del_{cid}", help="Delete this chat", use_container_width=True):
+                    del st.session_state.conversations[cid]
+                    if not st.session_state.conversations:
+                        new_conversation()
+                    elif st.session_state.current_id == cid:
+                        st.session_state.current_id = next(iter(st.session_state.conversations))
+                    st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
 
     st.divider()
 
-    # Model picker and voice input now live in a toolbar row directly above
-    # the chat box (see bottom of file) instead of the sidebar, so everything
-    # needed to send a message lives in one place. The indexed-files list and
-    # "Clear documents" stay here since this is a status/management view, not
-    # an input control.
     if st.session_state.uploaded_filenames:
         st.markdown('<p class="sage-eyebrow">Indexed documents</p>', unsafe_allow_html=True)
         for fn in st.session_state.uploaded_filenames:
@@ -224,8 +269,7 @@ prompt = None
 
 
 def _index_uploaded_file(uf) -> None:
-    """Parses + indexes one uploaded file into the RAG store, same logic
-    that used to live in the sidebar's file_uploader handler."""
+    """Parses + indexes one uploaded file into the RAG store."""
     if uf.name in st.session_state.uploaded_filenames:
         return
     try:
@@ -242,23 +286,56 @@ def _index_uploaded_file(uf) -> None:
         st.error(f"Couldn't process {uf.name}: {e}")
 
 
-# ---------- Toolbar row (model + voice), docked directly above the chat
-# box. Previously these were force-positioned INSIDE the chat_input via
-# absolute CSS — a fragile hack that depended on unverifiable Streamlit
-# internals and broke visually (overlapping gold box, clipped placeholder
-# text). This is the robust version: two plain st.popover buttons laid out
-# in a normal st.columns() row, styled to match the app's look. Nothing
-# overlaps, nothing depends on guessed pixel offsets, and it still reads
-# as "everything needed to send a message lives in one place." ----------
-toolbar_col1, toolbar_col2, toolbar_spacer = st.columns([0.09, 0.09, 0.82])
+# ---------- Toolbar row: attach ("+") + model + voice ----------
+# Streamlit's native chat_input "+" only opens a raw file dialog — it can't
+# show a menu. This custom "+" popover replaces that: it opens a real menu
+# with Photo / File / Link tabs, queues what you pick as chips above the
+# input, and everything gets attached when you hit send. accept_file is
+# turned off on chat_input below so there's only ONE attach control, not two.
+toolbar_col1, toolbar_col2, toolbar_col3, toolbar_spacer = st.columns([0.07, 0.07, 0.07, 0.79])
 
 with toolbar_col1:
+    with st.popover("＋", use_container_width=True):
+        st.caption("Add to this message")
+        tab_photo, tab_file, tab_link = st.tabs(["📷 Photo", "📄 File", "🔗 Link"])
+
+        with tab_photo:
+            photos = st.file_uploader(
+                "Upload photos", type=IMAGE_TYPES, accept_multiple_files=True,
+                label_visibility="collapsed", key="attach_photo_uploader",
+            )
+            if photos:
+                existing = {f.name for f in st.session_state.pending_files}
+                for p in photos:
+                    if p.name not in existing:
+                        st.session_state.pending_files.append(p)
+
+        with tab_file:
+            docs = st.file_uploader(
+                "Upload files", type=DOC_TYPES, accept_multiple_files=True,
+                label_visibility="collapsed", key="attach_file_uploader",
+            )
+            if docs:
+                existing = {f.name for f in st.session_state.pending_files}
+                for d in docs:
+                    if d.name not in existing:
+                        st.session_state.pending_files.append(d)
+
+        with tab_link:
+            link_val = st.text_input("Paste a link", key="attach_link_input", label_visibility="collapsed")
+            if st.button("Add link", key="add_link_btn"):
+                cleaned = link_val.strip()
+                if cleaned and cleaned not in st.session_state.pending_links:
+                    st.session_state.pending_links.append(cleaned)
+                    st.rerun()
+
+with toolbar_col2:
     model_labels = list(AVAILABLE_MODELS.keys())
     current_label = next(
         (label for label, mid in AVAILABLE_MODELS.items() if mid == st.session_state.selected_model),
         model_labels[0],
     )
-    with st.popover("⚙️ Model", use_container_width=True):
+    with st.popover("⚙️", use_container_width=True):
         st.caption("Model")
         chosen_label = st.selectbox(
             "Model", model_labels, index=model_labels.index(current_label),
@@ -266,8 +343,8 @@ with toolbar_col1:
         )
         st.session_state.selected_model = AVAILABLE_MODELS[chosen_label]
 
-with toolbar_col2:
-    with st.popover("🎤 Voice", use_container_width=True):
+with toolbar_col3:
+    with st.popover("🎤", use_container_width=True):
         st.caption("Record a voice message")
         audio_value = st.audio_input("Record a voice message", label_visibility="collapsed")
         if audio_value is not None:
@@ -290,20 +367,40 @@ with toolbar_col2:
                 except Exception as e:
                     st.error(f"Transcription failed: {e}")
 
+# ---------- Pending attachment chips ----------
+if st.session_state.pending_files or st.session_state.pending_links:
+    chip_html = ['<div class="sage-chip-row">']
+    for pf in st.session_state.pending_files:
+        chip_html.append(f'<span class="sage-chip">📎 {pf.name}</span>')
+    for pl in st.session_state.pending_links:
+        chip_html.append(f'<span class="sage-chip">🔗 {pl}</span>')
+    chip_html.append("</div>")
+    st.markdown("".join(chip_html), unsafe_allow_html=True)
+    if st.button("Clear attachments", key="clear_pending"):
+        st.session_state.pending_files = []
+        st.session_state.pending_links = []
+        st.rerun()
+
 chat_value = st.chat_input(
     "Ask anything, ask about your documents, or ask for code...",
-    accept_file="multiple",
-    file_type=["pdf", "docx", "xlsx", "xls", "csv", "txt"],
+    accept_file=False,  # replaced by the custom "+" attach menu above
 )
 
 if chat_value:
-    for uf in chat_value.files or []:
-        _index_uploaded_file(uf)
     typed_prompt = (chat_value.text or "").strip()
     if typed_prompt:
         prompt = typed_prompt
 
 if prompt:
+    # Fold in anything queued via the "+" menu.
+    for pf in st.session_state.pending_files:
+        _index_uploaded_file(pf)
+    if st.session_state.pending_links:
+        links_note = "\n".join(f"🔗 {u}" for u in st.session_state.pending_links)
+        prompt = f"{prompt}\n\n{links_note}"
+    st.session_state.pending_files = []
+    st.session_state.pending_links = []
+
     messages.append({"role": "user", "content": prompt})
     if current_conv["title"] == "New chat":
         current_conv["title"] = prompt[:TITLE_MAX_LEN] + ("…" if len(prompt) > TITLE_MAX_LEN else "")
