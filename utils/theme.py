@@ -382,18 +382,37 @@ code, pre, .stCodeBlock, [data-testid="stCodeBlock"] {
     background: var(--sage-deep) !important;
 }
 
-/* ---------- Input bar control row (model + mic), docked to chat_input ----------
+/* ---------- Input bar overlay (model + mic floated onto the left edge of
+   the chat box) ----------
    Streamlit's chat_input can't have widgets embedded inside it, so this
-   is a second, adjacent row styled to match — negative margin pulls it
-   flush against the chat box below so the two read as one bar. Both
-   trigger buttons are pinned to the exact same square footprint as the
-   chat box's own send button (see the stChatInput button rule further
-   down), just in sage instead of gold, so all three read as one family
-   of same-size/same-shape controls in different colors. */
-.st-key-sage_inputbar_controls {
-    margin-bottom: -10px;
+   fakes it: sage_inputbar_wrapper wraps both the two control buttons and
+   the chat_input itself in one positioning context, then the two
+   st.container(key=...) hooks below are floated absolutely on top of the
+   input's left edge. This depends on internals (exact chat_input padding,
+   how Streamlit lays out a container that holds chat_input) that can't be
+   verified without a live render — if the overlap is off, the fix is
+   nudging the left/bottom px values below to match what actually renders.
+*/
+.st-key-sage_inputbar_wrapper {
+    position: relative !important;
 }
-.st-key-sage_inputbar_controls [data-testid="stPopover"] > button {
+/* Reserve room on the left of the typed text so it doesn't run under the
+   floated buttons. */
+.st-key-sage_inputbar_wrapper [data-testid="stChatInputTextArea"] {
+    padding-left: 104px !important;
+}
+.st-key-sage_ctrl_model,
+.st-key-sage_ctrl_mic {
+    position: absolute !important;
+    bottom: 10px !important;
+    z-index: 20 !important;
+    width: 44px !important;
+}
+.st-key-sage_ctrl_model { left: 12px !important; }
+.st-key-sage_ctrl_mic   { left: 62px !important; }
+
+.st-key-sage_ctrl_model [data-testid="stPopover"] > button,
+.st-key-sage_ctrl_mic [data-testid="stPopover"] > button {
     background: linear-gradient(135deg, var(--sage), var(--sage-deep)) !important;
     color: var(--bg-deep) !important;
     border: none !important;
@@ -409,10 +428,12 @@ code, pre, .stCodeBlock, [data-testid="stCodeBlock"] {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
     transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
 }
-.st-key-sage_inputbar_controls [data-testid="stPopover"] > button p {
+.st-key-sage_ctrl_model [data-testid="stPopover"] > button p,
+.st-key-sage_ctrl_mic [data-testid="stPopover"] > button p {
     margin: 0 !important;
 }
-.st-key-sage_inputbar_controls [data-testid="stPopover"] > button:hover {
+.st-key-sage_ctrl_model [data-testid="stPopover"] > button:hover,
+.st-key-sage_ctrl_mic [data-testid="stPopover"] > button:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 18px var(--sage-glow) !important;
     filter: brightness(1.06);
