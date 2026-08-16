@@ -145,6 +145,14 @@ if "uploader_version" not in st.session_state:
     st.session_state.uploader_version = 0
 if "use_rag_toggle" not in st.session_state:
     st.session_state.use_rag_toggle = bool(st.session_state.uploaded_filenames)
+if "rag_auto_synced" not in st.session_state:
+    # Chroma's persistent store can already contain documents from an
+    # earlier session (page reload, etc.) even though uploaded_filenames
+    # (a plain session list) has reset to empty. Catch that case once per
+    # session so the toggle reflects reality instead of defaulting off.
+    if st.session_state.rag_store.has_documents():
+        st.session_state.use_rag_toggle = True
+    st.session_state.rag_auto_synced = True
 
 # Backfill "starred" on conversations created before this feature existed.
 for _conv in st.session_state.conversations.values():
@@ -288,6 +296,10 @@ prompt = None
 def _index_uploaded_file(uf) -> None:
     """Parses + indexes one uploaded file into the RAG store."""
     if uf.name in st.session_state.uploaded_filenames:
+        # Already indexed earlier in this session — still make sure RAG
+        # grounding is on for this turn, since this is exactly the case
+        # that was silently skipping the toggle-on step before.
+        st.session_state.use_rag_toggle = True
         return
     try:
         with st.spinner(f"Reading {uf.name}..."):
