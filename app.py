@@ -136,6 +136,15 @@ if "pending_files" not in st.session_state:
     st.session_state.pending_files = []          # list of UploadedFile objects, queued via "+"
 if "pending_links" not in st.session_state:
     st.session_state.pending_links = []           # list of url strings, queued via "+"
+if "uploader_version" not in st.session_state:
+    # Bumping this changes the file_uploader widget keys below, forcing
+    # Streamlit to give us a fresh (empty) uploader instead of one that
+    # still remembers the previously-selected files. Without this,
+    # clearing pending_files alone does nothing because the uploader
+    # widget itself keeps re-feeding the same files back in on rerun.
+    st.session_state.uploader_version = 0
+if "use_rag_toggle" not in st.session_state:
+    st.session_state.use_rag_toggle = bool(st.session_state.uploaded_filenames)
 
 # Backfill "starred" on conversations created before this feature existed.
 for _conv in st.session_state.conversations.values():
@@ -143,6 +152,14 @@ for _conv in st.session_state.conversations.values():
 
 current_conv = st.session_state.conversations[st.session_state.current_id]
 messages = current_conv["messages"]
+
+
+def _reset_pending_attachments() -> None:
+    """Clears queued attachments AND resets the uploader widgets so they
+    don't silently re-populate pending_files with the same files again."""
+    st.session_state.pending_files = []
+    st.session_state.pending_links = []
+    st.session_state.uploader_version += 1
 
 
 # ---------- Sidebar ----------
@@ -228,9 +245,9 @@ with st.sidebar:
             st.rerun()
 
     st.divider()
-    use_rag = st.toggle(
+    st.toggle(
         "Ground answers in documents",
-        value=bool(st.session_state.uploaded_filenames),
+        key="use_rag_toggle",
         help="When on, questions are answered using retrieved document context. "
              "Documents you upload are shared across all your chats.",
     )
@@ -277,6 +294,11 @@ def _index_uploaded_file(uf) -> None:
             parsed = parse_document(uf)
             num_chunks = st.session_state.rag_store.add_document(parsed["filename"], parsed["text"])
         st.session_state.uploaded_filenames.append(uf.name)
+        # A document just got indexed this turn — make sure RAG grounding
+        # is actually switched on for the reply we're about to generate,
+        # instead of relying on a toggle value that was read before this
+        # file existed.
+        st.session_state.use_rag_toggle = True
         st.toast(f"{uf.name} indexed — {num_chunks} chunks ready")
     except UnsupportedFileTypeError as e:
         st.error(str(e))
@@ -294,6 +316,8 @@ def _index_uploaded_file(uf) -> None:
 # turned off on chat_input below so there's only ONE attach control, not two.
 toolbar_col1, toolbar_col2, toolbar_col3, toolbar_spacer = st.columns([0.07, 0.07, 0.07, 0.79])
 
+uv = st.session_state.uploader_version  # current uploader "generation"
+
 with toolbar_col1:
     with st.popover("＋", use_container_width=True):
         st.caption("Add to this message")
@@ -302,7 +326,7 @@ with toolbar_col1:
         with tab_photo:
             photos = st.file_uploader(
                 "Upload photos", type=IMAGE_TYPES, accept_multiple_files=True,
-                label_visibility="collapsed", key="attach_photo_uploader",
+                label_visibility="collapsed", key=f"attach_photo_uploader_{uv}",
             )
             if photos:
                 existing = {f.name for f in st.session_state.pending_files}
@@ -313,7 +337,7 @@ with toolbar_col1:
         with tab_file:
             docs = st.file_uploader(
                 "Upload files", type=DOC_TYPES, accept_multiple_files=True,
-                label_visibility="collapsed", key="attach_file_uploader",
+                label_visibility="collapsed", key=f"attach_file_uploader_{uv}",
             )
             if docs:
                 existing = {f.name for f in st.session_state.pending_files}
@@ -377,8 +401,7 @@ if st.session_state.pending_files or st.session_state.pending_links:
     chip_html.append("</div>")
     st.markdown("".join(chip_html), unsafe_allow_html=True)
     if st.button("Clear attachments", key="clear_pending"):
-        st.session_state.pending_files = []
-        st.session_state.pending_links = []
+        _reset_pending_attachments()
         st.rerun()
 
 chat_value = st.chat_input(
@@ -400,8 +423,7 @@ if prompt:
     if st.session_state.pending_links:
         links_note = "\n".join(f"🔗 {u}" for u in st.session_state.pending_links)
         prompt = f"{prompt}\n\n{links_note}"
-    st.session_state.pending_files = []
-    st.session_state.pending_links = []
+    _reset_pending_attachments()
 
     messages.append({"role": "user", "content": prompt})
     if current_conv["title"] == "New chat":
@@ -416,6 +438,9 @@ if prompt:
 
         try:
             has_docs = st.session_state.rag_store.has_documents()
+            # Re-read the toggle here (not the stale sidebar-render-time
+            # value) so a file indexed earlier in THIS same run is honored.
+            use_rag = st.session_state.use_rag_toggle
 
             if use_rag and has_docs:
                 hits = st.session_state.rag_store.query(prompt)
