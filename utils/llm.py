@@ -5,7 +5,16 @@ Thin wrapper around the Groq API for chat + code generation.
 import os
 from groq import Groq
 
-MODEL_NAME = "llama-3.3-70b-versatile"  # strong at both chat and code, free tier
+# Groq-hosted models available for selection in the UI. If Groq retires or
+# renames a model, update this list — the app will surface Groq's own error
+# message if a stale model id is selected, it won't fail silently.
+AVAILABLE_MODELS = {
+    "Llama 3.3 70B — best all-round (default)": "llama-3.3-70b-versatile",
+    "Llama 3.1 8B — fastest": "llama-3.1-8b-instant",
+    "Llama 3 70B": "llama3-70b-8192",
+    "Gemma 2 9B": "gemma2-9b-it",
+}
+DEFAULT_MODEL = "llama-3.3-70b-versatile"
 
 SYSTEM_PROMPT = (
     "You are Sage, a helpful AI assistant that can chat normally, answer "
@@ -26,16 +35,17 @@ def get_client() -> Groq:
     return Groq(api_key=api_key)
 
 
-def chat_completion(messages: list[dict], temperature: float = 0.4) -> str:
+def chat_completion(messages: list[dict], model: str = DEFAULT_MODEL, temperature: float = 0.4) -> str:
     """
     messages: list of {"role": "user"|"assistant"|"system", "content": str}
+    model: any Groq model id (see AVAILABLE_MODELS for the ones surfaced in the UI)
     Returns the assistant's reply text.
     """
     client = get_client()
     full_messages = [{"role": "system", "content": SYSTEM_PROMPT}] + messages
 
     response = client.chat.completions.create(
-        model=MODEL_NAME,
+        model=model,
         messages=full_messages,
         temperature=temperature,
         max_tokens=2048,
