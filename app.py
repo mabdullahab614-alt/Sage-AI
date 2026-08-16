@@ -309,6 +309,23 @@ for i, msg in enumerate(messages):
             code_blocks = extract_python_code_blocks(msg["content"])
             render_code_run_buttons(code_blocks, key_prefix=f"run_{st.session_state.current_id}_{i}")
 
+if messages:
+    # Auto-scroll to the latest message instead of leaving the user
+    # stranded wherever the page happened to be — components.v1.html runs
+    # a real <script> (unlike st.markdown, which strips it), and it can
+    # reach into the parent page's DOM since it's embedded inline in it.
+    st.components.v1.html(
+        """
+        <script>
+          const msgs = window.parent.document.querySelectorAll('[data-testid="stChatMessage"]');
+          if (msgs.length > 0) {
+            msgs[msgs.length - 1].scrollIntoView({behavior: "smooth", block: "end"});
+          }
+        </script>
+        """,
+        height=0,
+    )
+
 prompt = None
 
 
