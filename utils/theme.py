@@ -87,9 +87,6 @@ html, body, [class*="css"] {
     margin-bottom: 0.9rem;
 }
 
-/* Small uppercase section labels used throughout the sidebar (Chats,
-   Model, Documents, Voice input) — was referenced in app.py but never
-   actually styled, so it was falling back to plain paragraph text */
 .sage-eyebrow {
     font-size: 0.72rem;
     font-weight: 700;
@@ -99,7 +96,7 @@ html, body, [class*="css"] {
     margin: 0.6rem 0 0.3rem 0;
 }
 
-/* ---------- Signature leaf: ALWAYS in gentle motion, wherever it appears ---------- */
+/* ---------- Signature leaf ---------- */
 .sage-leaf-icon {
     display: inline-block;
     filter: drop-shadow(0 0 6px var(--sage-glow));
@@ -111,7 +108,7 @@ html, body, [class*="css"] {
     50%      { transform: rotate(9deg) scale(1.06); }
 }
 
-/* ---------- Empty-state greeting (Claude/ChatGPT style, staged + ambient entrance) ---------- */
+/* ---------- Empty-state greeting ---------- */
 .sage-empty-state {
     display: flex;
     flex-direction: column;
@@ -188,7 +185,6 @@ html, body, [class*="css"] {
     transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
-/* Send button inside the chat box */
 [data-testid="stChatInput"] button {
     background: linear-gradient(135deg, var(--gold), var(--gold-deep)) !important;
     color: var(--bg-deep) !important;
@@ -228,7 +224,7 @@ html, body, [class*="css"] {
     80%      { transform: translateY(-2px) rotate(1.5deg); }
 }
 
-/* Secondary / utility buttons (clear conversation, clear docs) get a quieter treatment */
+/* Secondary / utility buttons (clear conversation, clear docs) */
 [data-testid="stSidebar"] .stButton > button {
     background: transparent !important;
     color: var(--muted) !important;
@@ -251,7 +247,18 @@ html, body, [class*="css"] {
     80%      { transform: rotate(1deg); }
 }
 
-/* ---------- Chat messages: fade/slide in, distinct user vs assistant tone ---------- */
+/* ---------- Sidebar chat row icon buttons (star / rename / delete):
+   force them small and square so they never stretch wide, regardless
+   of the narrow column they sit in. ---------- */
+.sage-chatrow-icon .stButton > button {
+    padding: 0.3rem 0 !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+    font-size: 0.85rem !important;
+}
+
+/* ---------- Chat messages ---------- */
 [data-testid="stChatMessage"] {
     animation: sage-msg-in 0.35s ease-out;
     border-radius: 16px !important;
@@ -270,7 +277,7 @@ html, body, [class*="css"] {
     background: linear-gradient(135deg, var(--sage), var(--sage-deep)) !important;
 }
 
-/* ---------- Chat input: ALWAYS-ON animated border glow (safe, no masking) ---------- */
+/* ---------- Chat input ---------- */
 [data-testid="stChatInput"] {
     border: 2px solid var(--sage) !important;
     border-radius: 14px !important;
@@ -307,7 +314,7 @@ html, body, [class*="css"] {
     background: var(--sage) !important;
 }
 
-/* ---------- File uploader (target actual dropzone + instructions + browse button) ---------- */
+/* ---------- File uploader ---------- */
 [data-testid="stFileUploader"] section,
 [data-testid="stFileUploaderDropzone"] {
     background: var(--bg-panel-raised) !important;
@@ -327,11 +334,6 @@ html, body, [class*="css"] {
 [data-testid="stFileUploaderDropzoneInstructions"] small {
     color: var(--muted) !important;
 }
-
-/* Any Streamlit "secondary" base button (this is what the uploader's Browse
-   button actually is under the hood — it isn't wrapped in .stButton, so the
-   .stButton > button rule above never reached it, leaving it on Streamlit's
-   default light styling and causing the invisible white-on-white text) */
 [data-testid^="stBaseButton"] {
     background: var(--bg-panel-raised) !important;
     color: var(--ink) !important;
@@ -358,13 +360,13 @@ code, pre, .stCodeBlock, [data-testid="stCodeBlock"] {
     border: 1px solid var(--border) !important;
 }
 
-/* ---------- Alerts (success/error/warning) recolored to fit palette ---------- */
+/* ---------- Alerts ---------- */
 [data-testid="stAlert"] {
     border-radius: 12px !important;
     border: 1px solid var(--border) !important;
 }
 
-/* ---------- Voice recorder (st.audio_input) ---------- */
+/* ---------- Voice recorder ---------- */
 [data-testid="stAudioInput"] {
     background: var(--bg-panel-raised) !important;
     border: 1.5px dashed var(--border) !important;
@@ -380,16 +382,11 @@ code, pre, .stCodeBlock, [data-testid="stCodeBlock"] {
     background: var(--sage-deep) !important;
 }
 
-/* ---------- Toolbar row (model + voice popovers, sits above chat input) ----------
-   Replaces the old absolute-positioned overlay hack that tried to float
-   these controls INSIDE the chat_input box. Streamlit's chat_input can't
-   have widgets embedded inside it, so the previous approach depended on
-   unverifiable internals (exact padding, container stacking) and broke
-   in practice (overlapping gold box, cut-off placeholder text).
-   This version just styles two normal st.popover buttons that sit in a
-   plain st.columns() row directly above the input — same visual family
-   (rounded, bordered, sage-accented on hover) but laid out through
-   Streamlit's normal flow, so nothing overlaps or gets clipped. */
+/* ---------- Toolbar row (attach + model + voice) ----------
+   Icon-only, fixed 44x44 squares — exactly matching the send button's
+   size so the whole row reads as one consistent control family. Fixed
+   width/height + nowrap means these can NEVER wrap onto two lines,
+   regardless of how narrow the browser window is. */
 [data-testid="stPopover"] > button {
     background: var(--bg-panel-raised) !important;
     color: var(--muted) !important;
@@ -397,21 +394,60 @@ code, pre, .stCodeBlock, [data-testid="stCodeBlock"] {
     border-radius: 10px !important;
     font-weight: 600 !important;
     font-family: var(--font-body) !important;
-    font-size: 0.82rem !important;
-    padding: 0.35rem 0.7rem !important;
-    height: 38px !important;
+    font-size: 1.05rem !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+    padding: 0 !important;
+    white-space: nowrap !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     box-shadow: none !important;
-    transition: border-color 0.16s ease, color 0.16s ease, background 0.16s ease;
+    transition: border-color 0.16s ease, color 0.16s ease, background 0.16s ease, transform 0.16s ease;
+}
+[data-testid="stPopover"] > button p {
+    margin: 0 !important;
+    white-space: nowrap !important;
 }
 [data-testid="stPopover"] > button:hover {
     border-color: var(--sage) !important;
     color: var(--sage) !important;
     background: rgba(143, 174, 124, 0.08) !important;
+    transform: translateY(-1px);
 }
 [data-testid="stPopover"] > button:focus-visible {
     outline: 2px solid var(--sage) !important;
     outline-offset: 2px;
 }
+
+/* ---------- Pending attachment chips (shown above chat input after
+   using the "+" attach menu) ---------- */
+.sage-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.3rem 0 0.5rem 0;
+}
+.sage-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: var(--bg-panel-raised);
+    border: 1px solid var(--border);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 0.28rem 0.7rem;
+    font-size: 0.8rem;
+    font-family: var(--font-body);
+}
+.sage-chip .sage-chip-remove {
+    color: var(--muted);
+    cursor: pointer;
+    font-weight: 700;
+}
+.sage-chip .sage-chip-remove:hover { color: var(--error); }
 
 /* ---------- Divider ---------- */
 hr { border-color: var(--border) !important; }
@@ -433,7 +469,7 @@ hr { border-color: var(--border) !important; }
 }
 .sage-footer a:hover { text-decoration: underline; }
 
-/* ---------- New chat-history sidebar list (added for multi-conversation support) ---------- */
+/* ---------- Chat-history sidebar list ---------- */
 .sage-chat-item {
     display: flex;
     align-items: center;
@@ -450,7 +486,7 @@ hr { border-color: var(--border) !important; }
     border: 1px solid var(--border);
 }
 
-/* ---------- Message action row (copy / regenerate / feedback) ---------- */
+/* ---------- Message action row ---------- */
 .sage-msg-actions {
     display: flex;
     gap: 0.4rem;
@@ -492,10 +528,6 @@ hr { border-color: var(--border) !important; }
 </style>
 """
 
-# Best-effort SEO/meta tags. Streamlit is a client-rendered app, so this
-# will not produce full server-side-rendered SEO the way a static site
-# would, but it does set the browser tab title, favicon, and description
-# meta tag used by link previews / some crawlers.
 SEO_INJECTION = f"""
 <script>
     try {{
@@ -537,10 +569,7 @@ def inject_theme(st_module):
 
 def render_empty_state(st_module):
     """
-    Centered startup greeting shown only before the first message —
-    same pattern as Claude/ChatGPT's empty state. Disappears automatically
-    once st.session_state.messages is non-empty, since the caller only
-    invokes this when there's no conversation yet.
+    Centered startup greeting shown only before the first message.
     """
     st_module.markdown(
         """
