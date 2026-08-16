@@ -264,14 +264,22 @@ html, body, [class*="css"] {
     max-width: 34px !important;
     padding: 0 !important;
     margin: 0 !important;
-    font-size: 0.85rem !important;
+    font-size: 0.8rem !important;
     font-weight: 500 !important;
     line-height: 1 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    overflow: hidden !important;
     box-shadow: none !important;
     transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.sage-chatrow-icon .stButton > button,
+.sage-chatrow-icon .stButton > button p {
+    /* Force plain text/monochrome glyph rendering instead of the browser's
+       fixed-size color emoji presentation, which is what was overflowing
+       the box regardless of font-size. */
+    font-variant-emoji: text;
 }
 /* Streamlit wraps the button label in a <div><p> pair that carries its
    own margin/line-height — that leftover spacing was what pushed the
