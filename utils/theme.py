@@ -173,7 +173,7 @@ html, body, [class*="css"] {
 }
 
 /* ---------- Buttons: hover lift, press, ripple, focus glow ---------- */
-.stButton > button, [data-testid="stChatInput"] button, .stDownloadButton > button {
+.stButton > button, .stDownloadButton > button {
     background: linear-gradient(135deg, var(--gold), var(--gold-deep)) !important;
     color: var(--bg-deep) !important;
     border: none !important;
@@ -183,6 +183,26 @@ html, body, [class*="css"] {
     font-family: var(--font-body) !important;
     letter-spacing: 0.01em;
     padding: 0.5rem 1.1rem !important;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+/* Send button inside the chat box — pinned to the same 44px square as the
+   model/mic buttons above it (gold instead of sage) so all three controls
+   share one exact size/shape, just color-coded by function. */
+[data-testid="stChatInput"] button {
+    background: linear-gradient(135deg, var(--gold), var(--gold-deep)) !important;
+    color: var(--bg-deep) !important;
+    border: none !important;
+    border-radius: 10px !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     position: relative;
     overflow: hidden;
     transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
@@ -365,30 +385,37 @@ code, pre, .stCodeBlock, [data-testid="stCodeBlock"] {
 /* ---------- Input bar control row (model + mic), docked to chat_input ----------
    Streamlit's chat_input can't have widgets embedded inside it, so this
    is a second, adjacent row styled to match — negative margin pulls it
-   flush against the chat box below so the two read as one bar. */
+   flush against the chat box below so the two read as one bar. Both
+   trigger buttons are pinned to the exact same square footprint as the
+   chat box's own send button (see the stChatInput button rule further
+   down), just in sage instead of gold, so all three read as one family
+   of same-size/same-shape controls in different colors. */
 .st-key-sage_inputbar_controls {
     margin-bottom: -10px;
 }
-.st-key-sage_inputbar_controls [data-testid="stSelectbox"] > div > div {
-    background: var(--bg-panel-raised) !important;
-    border: 1.5px solid var(--border) !important;
-    border-radius: 10px !important;
-    color: var(--ink) !important;
-    min-height: 2.4rem !important;
-}
 .st-key-sage_inputbar_controls [data-testid="stPopover"] > button {
-    background: var(--bg-panel-raised) !important;
-    border: 1.5px solid var(--border) !important;
+    background: linear-gradient(135deg, var(--sage), var(--sage-deep)) !important;
+    color: var(--bg-deep) !important;
+    border: none !important;
     border-radius: 10px !important;
-    color: var(--ink) !important;
-    min-height: 2.4rem !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     font-size: 1.05rem !important;
-    padding: 0.35rem 0.7rem !important;
-    box-shadow: none !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+    transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+}
+.st-key-sage_inputbar_controls [data-testid="stPopover"] > button p {
+    margin: 0 !important;
 }
 .st-key-sage_inputbar_controls [data-testid="stPopover"] > button:hover {
-    border-color: var(--sage) !important;
-    background: rgba(143, 174, 124, 0.08) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px var(--sage-glow) !important;
+    filter: brightness(1.06);
 }
 
 /* ---------- Divider ---------- */
