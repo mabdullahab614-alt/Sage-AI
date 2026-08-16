@@ -239,37 +239,27 @@ html, body, [class*="css"] {
     background: linear-gradient(135deg, var(--sage), var(--sage-deep)) !important;
 }
 
-/* ---------- Chat input: ALWAYS-ON animated glowing border ring ---------- */
+/* ---------- Chat input: ALWAYS-ON animated border glow (safe, no masking) ---------- */
 [data-testid="stChatInput"] {
-    position: relative;
-    border: 1px solid var(--border) !important;
+    border: 2px solid var(--sage) !important;
     border-radius: 14px !important;
     background: var(--bg-panel-raised) !important;
-    transition: box-shadow 0.2s ease;
-    z-index: 0;
-}
-[data-testid="stChatInput"]::before {
-    content: "";
-    position: absolute;
-    inset: -2px;
-    border-radius: 16px;
-    padding: 2px;
-    background: conic-gradient(from 0deg, var(--sage), var(--gold), var(--sage-deep), var(--gold-deep), var(--sage));
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    animation: sage-border-spin 5s linear infinite;
-    z-index: -1;
-    opacity: 0.75;
-}
-[data-testid="stChatInput"]:focus-within::before {
-    opacity: 1;
+    animation: sage-input-pulse 3.2s ease-in-out infinite;
 }
 [data-testid="stChatInput"]:focus-within {
-    box-shadow: 0 0 22px var(--sage-glow) !important;
+    animation: none;
+    border-color: var(--sage) !important;
+    box-shadow: 0 0 0 4px var(--sage-glow) !important;
 }
-@keyframes sage-border-spin {
-    to { transform: rotate(360deg); }
+@keyframes sage-input-pulse {
+    0%, 100% {
+        border-color: var(--sage);
+        box-shadow: 0 0 8px rgba(143, 174, 124, 0.25);
+    }
+    50% {
+        border-color: var(--gold);
+        box-shadow: 0 0 14px rgba(217, 169, 78, 0.3);
+    }
 }
 [data-testid="stChatInputTextArea"] {
     background: var(--bg-panel-raised) !important;
@@ -371,7 +361,7 @@ hr { border-color: var(--border) !important; }
     .sage-empty-state h1,
     .sage-empty-state p,
     [data-testid="stChatMessage"],
-    [data-testid="stChatInput"]::before,
+    [data-testid="stChatInput"],
     .stButton > button:hover,
     [data-testid="stSidebar"] .stButton > button:hover,
     [data-testid^="stBaseButton"]:hover {
