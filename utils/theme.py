@@ -87,7 +87,19 @@ html, body, [class*="css"] {
     margin-bottom: 0.9rem;
 }
 
-/* ---------- Empty-state greeting (Claude/ChatGPT style, staged entrance) ---------- */
+/* ---------- Signature leaf: ALWAYS in gentle motion, wherever it appears ---------- */
+.sage-leaf-icon {
+    display: inline-block;
+    filter: drop-shadow(0 0 6px var(--sage-glow));
+    animation: sage-leaf-sway 2.8s ease-in-out infinite;
+    transform-origin: bottom center;
+}
+@keyframes sage-leaf-sway {
+    0%, 100% { transform: rotate(-9deg) scale(1); }
+    50%      { transform: rotate(9deg) scale(1.06); }
+}
+
+/* ---------- Empty-state greeting (Claude/ChatGPT style, staged + ambient entrance) ---------- */
 .sage-empty-state {
     display: flex;
     flex-direction: column;
@@ -95,6 +107,7 @@ html, body, [class*="css"] {
     justify-content: center;
     text-align: center;
     padding: 12vh 1rem 2rem 1rem;
+    animation: sage-float 6s ease-in-out infinite;
 }
 .sage-empty-state .sage-empty-icon {
     display: inline-block;
@@ -103,16 +116,23 @@ html, body, [class*="css"] {
     filter: drop-shadow(0 0 10px var(--sage-glow));
     animation:
         sage-icon-pop-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 1,
-        sage-breathe 3.6s ease-in-out 0.7s infinite;
+        sage-leaf-sway 2.8s ease-in-out 0.7s infinite;
 }
 .sage-empty-state h1 {
     font-family: var(--font-display);
     font-weight: 600;
     font-size: 2.05rem;
-    color: var(--ink);
     margin: 0 0 0.5rem 0;
     opacity: 0;
-    animation: sage-cascade-in 0.55s ease-out 0.22s forwards;
+    background: linear-gradient(100deg, var(--ink) 40%, var(--sage) 50%, var(--ink) 60%);
+    background-size: 260% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: var(--ink);
+    animation:
+        sage-cascade-in 0.55s ease-out 0.22s forwards,
+        sage-text-shimmer 5s linear 1.2s infinite;
 }
 .sage-empty-state p {
     font-family: var(--font-body);
@@ -122,10 +142,6 @@ html, body, [class*="css"] {
     opacity: 0;
     animation: sage-cascade-in 0.55s ease-out 0.4s forwards;
 }
-@keyframes sage-breathe {
-    0%, 100% { transform: scale(1); opacity: 0.92; }
-    50%      { transform: scale(1.08); opacity: 1; }
-}
 @keyframes sage-icon-pop-in {
     0%   { opacity: 0; transform: scale(0.3) rotate(-25deg); }
     60%  { opacity: 1; transform: scale(1.15) rotate(6deg); }
@@ -134,6 +150,14 @@ html, body, [class*="css"] {
 @keyframes sage-cascade-in {
     from { opacity: 0; transform: translateY(14px); }
     to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes sage-text-shimmer {
+    from { background-position: 200% center; }
+    to   { background-position: -200% center; }
+}
+@keyframes sage-float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
 }
 
 /* ---------- Buttons: hover lift, press, ripple, focus glow ---------- */
@@ -155,6 +179,7 @@ html, body, [class*="css"] {
     transform: translateY(-2px);
     box-shadow: 0 6px 18px rgba(217, 169, 78, 0.35);
     filter: brightness(1.06);
+    animation: sage-btn-vibrate 0.4s ease-in-out;
 }
 .stButton > button:active, .stDownloadButton > button:active {
     transform: translateY(0px) scale(0.98);
@@ -163,6 +188,13 @@ html, body, [class*="css"] {
 .stButton > button:focus-visible {
     outline: 2px solid var(--sage) !important;
     outline-offset: 2px;
+}
+@keyframes sage-btn-vibrate {
+    0%, 100% { transform: translateY(-2px) rotate(0deg); }
+    20%      { transform: translateY(-2px) rotate(-2.5deg); }
+    40%      { transform: translateY(-2px) rotate(2.5deg); }
+    60%      { transform: translateY(-2px) rotate(-1.5deg); }
+    80%      { transform: translateY(-2px) rotate(1.5deg); }
 }
 
 /* Secondary / utility buttons (clear conversation, clear docs) get a quieter treatment */
@@ -178,6 +210,14 @@ html, body, [class*="css"] {
     border-color: var(--sage) !important;
     background: rgba(143, 174, 124, 0.08) !important;
     box-shadow: 0 0 0 3px var(--sage-glow);
+    animation: sage-btn-vibrate-subtle 0.4s ease-in-out;
+}
+@keyframes sage-btn-vibrate-subtle {
+    0%, 100% { transform: rotate(0deg); }
+    20%      { transform: rotate(-1.5deg); }
+    40%      { transform: rotate(1.5deg); }
+    60%      { transform: rotate(-1deg); }
+    80%      { transform: rotate(1deg); }
 }
 
 /* ---------- Chat messages: fade/slide in, distinct user vs assistant tone ---------- */
@@ -199,16 +239,37 @@ html, body, [class*="css"] {
     background: linear-gradient(135deg, var(--sage), var(--sage-deep)) !important;
 }
 
-/* ---------- Chat input: focus glow (target the ACTUAL textarea, not just wrapper) ---------- */
+/* ---------- Chat input: ALWAYS-ON animated glowing border ring ---------- */
 [data-testid="stChatInput"] {
+    position: relative;
     border: 1px solid var(--border) !important;
     border-radius: 14px !important;
     background: var(--bg-panel-raised) !important;
-    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    transition: box-shadow 0.2s ease;
+    z-index: 0;
+}
+[data-testid="stChatInput"]::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 16px;
+    padding: 2px;
+    background: conic-gradient(from 0deg, var(--sage), var(--gold), var(--sage-deep), var(--gold-deep), var(--sage));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: sage-border-spin 5s linear infinite;
+    z-index: -1;
+    opacity: 0.75;
+}
+[data-testid="stChatInput"]:focus-within::before {
+    opacity: 1;
 }
 [data-testid="stChatInput"]:focus-within {
-    border-color: var(--sage) !important;
-    box-shadow: 0 0 0 4px var(--sage-glow) !important;
+    box-shadow: 0 0 22px var(--sage-glow) !important;
+}
+@keyframes sage-border-spin {
+    to { transform: rotate(360deg); }
 }
 [data-testid="stChatInputTextArea"] {
     background: var(--bg-panel-raised) !important;
@@ -264,6 +325,7 @@ html, body, [class*="css"] {
     color: var(--sage) !important;
     background: rgba(143, 174, 124, 0.08) !important;
     transform: translateY(-1px);
+    animation: sage-btn-vibrate-subtle 0.4s ease-in-out;
 }
 
 /* ---------- Code blocks ---------- */
@@ -303,10 +365,16 @@ hr { border-color: var(--border) !important; }
 
 /* ---------- Respect reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
+    .sage-leaf-icon,
     .sage-empty-icon,
+    .sage-empty-state,
     .sage-empty-state h1,
     .sage-empty-state p,
-    [data-testid="stChatMessage"] {
+    [data-testid="stChatMessage"],
+    [data-testid="stChatInput"]::before,
+    .stButton > button:hover,
+    [data-testid="stSidebar"] .stButton > button:hover,
+    [data-testid^="stBaseButton"]:hover {
         animation: none !important;
         opacity: 1 !important;
     }
