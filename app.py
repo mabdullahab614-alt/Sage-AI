@@ -252,7 +252,7 @@ def _index_uploaded_file(uf) -> None:
 # everything needed to send a message now lives in this one spot instead
 # of being split off in the sidebar. ----------
 with st.container(key="sage_inputbar_controls"):
-    ctrl_model_col, ctrl_mic_col, ctrl_spacer_col = st.columns([1.6, 0.5, 3.4], gap="small")
+    ctrl_model_col, ctrl_mic_col, ctrl_spacer_col = st.columns([0.42, 0.42, 4.16], gap="small")
 
     with ctrl_model_col:
         model_labels = list(AVAILABLE_MODELS.keys())
@@ -260,11 +260,13 @@ with st.container(key="sage_inputbar_controls"):
             (label for label, mid in AVAILABLE_MODELS.items() if mid == st.session_state.selected_model),
             model_labels[0],
         )
-        chosen_label = st.selectbox(
-            "Model", model_labels, index=model_labels.index(current_label),
-            label_visibility="collapsed", key="model_picker",
-        )
-        st.session_state.selected_model = AVAILABLE_MODELS[chosen_label]
+        with st.popover("⚙️", use_container_width=True):
+            st.caption("Model")
+            chosen_label = st.selectbox(
+                "Model", model_labels, index=model_labels.index(current_label),
+                label_visibility="collapsed", key="model_picker",
+            )
+            st.session_state.selected_model = AVAILABLE_MODELS[chosen_label]
 
     with ctrl_mic_col:
         with st.popover("🎤", use_container_width=True):
