@@ -60,7 +60,7 @@ def render_message_actions(conv_id: str, idx: int, content: str, is_last: bool) 
     fb_key = (conv_id, idx)
     current_fb = st.session_state.feedback.get(fb_key)
 
-    cols = st.columns([1, 1, 1, 1, 8]) if is_last else st.columns([1, 1, 1, 8])
+    cols = st.columns(4) if is_last else st.columns(3)
 
     b64 = base64.b64encode(content.encode("utf-8")).decode("ascii")
     copy_html = (
