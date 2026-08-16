@@ -1,425 +1,322 @@
 """
-Sage AI — visual theme.
+Sage AI custom theme.
 
-Design language: "a naturalist's field notebook, drafted like a blueprint" —
-now in a light parchment palette instead of dark. Solid, opaque fills
-throughout (no glass/blur, no gradients) in cream, deep sage green, and
-walnut brown. A drawn line-art leaf diagram stands in for the brand mark.
-Cards are framed like technical-drawing callouts with corner registration
-marks. The footer is an engineering title block.
-
-The header is a normal (non-sticky) block with generous height and a solid
-background — earlier versions used `position: sticky` plus a negative
-edge-bleed margin, which on Streamlit Cloud fought with the platform's own
-fixed toolbar and made the header disappear. This version just sits in
-normal document flow, tall and unmissable.
-
-Usage (top of app.py, right after st.set_page_config):
-
-    from utils.theme import inject_theme, render_header, render_hero, render_footer
-
-    inject_theme()
-    render_header()
-    ... existing app body ...
-    render_footer()
+Design system:
+- Colors chosen deliberately (not Streamlit defaults):
+    Sage green   -> the literal plant color the brand is named after.
+                    Psychologically: wisdom, calm, balance, growth.
+    Warm charcoal -> depth and focus without the flat "pure black" look.
+    Warm gold     -> confidence/warmth accent for primary actions.
+    Warm ivory    -> softer than pure white, easier on the eyes for long chats.
+- Type system: a characterful serif for the wordmark/headers (Fraunces),
+  a warm humanist sans for body/chat text (Plus Jakarta Sans), and a
+  proper coding monospace for code blocks (JetBrains Mono).
+- One signature move: a small breathing leaf mark next to the wordmark,
+  everything else stays disciplined (consistent spacing, restrained motion).
 """
 
-import streamlit as st
+PAGE_TITLE = "Sage AI — AI Document & Code Assistant"
+PAGE_DESCRIPTION = (
+    "Sage AI is a free AI assistant for chat, document Q&A (RAG over PDF, "
+    "Word, Excel, and CSV files), and Python code generation with live "
+    "execution — built by Abdullah Javed."
+)
+PAGE_ICON = "🌿"
 
-GITHUB_URL = "https://github.com/mabdullahab614-alt/Sage-AI"
-LIVE_URL = "https://sage-ai-q9bvrp6nmajtrxp9rp9zna.streamlit.app"
-AUTHOR = "Abdullah Javed"
-
-# A drawn botanical line diagram — center vein + side veins, stroke only.
-LEAF_SVG = """
-<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="sg-leaf-svg">
-  <path d="M16 3.5C9.6 7.4 5.6 13.8 5.6 19.6c0 5.1 4.6 8.9 10.4 8.9s10.4-3.8 10.4-8.9C26.4 13.8 22.4 7.4 16 3.5z"
-        stroke="currentColor" stroke-width="1.3"/>
-  <path d="M16 6.5v20.5" stroke="currentColor" stroke-width=".9"/>
-  <path d="M16 11.5l-4.6 2.8M16 11.5l4.6 2.8M16 17.5l-4 2.4M16 17.5l4 2.4M16 23l-3 1.9M16 23l3 1.9"
-        stroke="currentColor" stroke-width=".7"/>
-</svg>
-"""
-
-_CSS = """
+FONT_IMPORTS = """
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+"""
 
+CUSTOM_CSS = """
 <style>
-:root{
-  color-scheme: light;
-  --bg:            #f7f1e3;
-  --bg-raised:     #fffcf5;
-  --bg-raised-2:   #efe4cb;
-  --green:         #3c5a37;
-  --green-dark:    #2a4126;
-  --brown:         #7a5230;
-  --brown-dark:    #593a20;
-  --ink:           #2a2015;
-  --ink-muted:     #6c6252;
-  --ink-faint:     #978c78;
-  --line:          rgba(42,32,21,0.14);
-  --line-strong:   rgba(42,32,21,0.28);
-  --shadow-1:      0 1px 3px rgba(42,32,21,.10);
-  --shadow-2:      0 8px 22px rgba(42,32,21,.14);
-  --ease:          cubic-bezier(.2,.75,.3,1);
-
-  /* dark surface, used only for header / footer / buttons — the
-     deliberate "mix" against the light parchment body */
-  --dark:          #23301f;
-  --dark-2:        #2f3f27;
-  --dark-line:     rgba(247,241,227,0.14);
-  --cream:         #f4ecd8;
-  --gold:          #d3a34f;
+:root {
+    --sage: #8FAE7C;
+    --sage-deep: #5C7A4E;
+    --sage-glow: rgba(143, 174, 124, 0.35);
+    --gold: #D9A94E;
+    --gold-deep: #B98A34;
+    --bg-deep: #14181A;
+    --bg-panel: #1B211C;
+    --bg-panel-raised: #212820;
+    --ink: #EDEAE0;
+    --muted: #9CA394;
+    --error: #E2725B;
+    --border: rgba(143, 174, 124, 0.18);
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Courier New', monospace;
 }
 
-@media (prefers-reduced-motion: reduce){
-  *{ animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+/* ---------- Base ---------- */
+html, body, [class*="css"] {
+    font-family: var(--font-body) !important;
 }
 
-html, body, [class*="css"]{ font-family: 'IBM Plex Sans', sans-serif; }
-
-.stApp{
-  color-scheme: light;
-  background-color: var(--bg);
-  background-image:
-    linear-gradient(var(--line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line) 1px, transparent 1px);
-  background-size: 34px 34px;
-  color: var(--ink);
+.stApp {
+    background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(143, 174, 124, 0.08), transparent),
+        var(--bg-deep) !important;
+    color: var(--ink) !important;
 }
 
-section[data-testid="stSidebar"]{
-  background: var(--bg-raised-2);
-  border-right: 1px solid var(--line-strong);
+/* ---------- Custom scrollbar ---------- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb {
+    background: var(--sage-deep);
+    border-radius: 8px;
+    border: 2px solid var(--bg-deep);
 }
-section[data-testid="stSidebar"] *{ color: var(--ink); }
-section[data-testid="stSidebar"] h1{ color: var(--green-dark); }
+::-webkit-scrollbar-thumb:hover { background: var(--sage); }
 
-.block-container{ padding-top: 1.5rem; padding-bottom: 6rem; max-width: 960px; }
+/* ---------- Sidebar ---------- */
+[data-testid="stSidebar"] {
+    background: var(--bg-panel) !important;
+    border-right: 1px solid var(--border);
+}
+[data-testid="stSidebar"] * { color: var(--ink); }
 
-/* Streamlit's fixed bottom bar that holds the chat input — retheme it so it
-   doesn't sit there as an unstyled black strip, and stop it covering the
-   last rows of page content (like the footer title block) as you scroll. */
-div[data-testid="stBottom"], .stChatFloatingInputContainer{
-  background: var(--bg) !important;
-  border-top: 1px solid var(--line-strong) !important;
-}
-div[data-testid="stBottom"] > div{ background: var(--bg) !important; }
-
-::-webkit-scrollbar{ width: 9px; height: 9px; }
-::-webkit-scrollbar-track{ background: var(--bg); }
-::-webkit-scrollbar-thumb{ background: var(--bg-raised-2); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover{ background: var(--brown); }
-:focus-visible{ outline: 1.5px solid var(--brown); outline-offset: 2px; }
-
-.sg-leaf-svg{ width: 100%; height: 100%; color: var(--green-dark); display: block; }
-
-@keyframes fadeUp{ from{ opacity:0; transform: translateY(8px);} to{ opacity:1; transform: translateY(0);} }
-@keyframes blink{ 0%,49%{ opacity:1;} 50%,100%{ opacity:0;} }
-@keyframes sway{ 0%,100%{ transform: rotate(-3deg);} 50%{ transform: rotate(3deg);} }
-
-/* ---------------------------------------------------------------- */
-/* Corner-bracket frame — shared "technical drawing" motif           */
-/* ---------------------------------------------------------------- */
-.sg-frame{ position: relative; }
-.sg-frame::before, .sg-frame::after{
-  content: ""; position: absolute; width: 12px; height: 12px;
-  border: 1.5px solid var(--brown); opacity: .85; transition: width .25s var(--ease), height .25s var(--ease);
-}
-.sg-frame::before{ top: -1px; left: -1px; border-right: none; border-bottom: none; }
-.sg-frame::after{ bottom: -1px; right: -1px; border-left: none; border-top: none; }
-.sg-frame:hover::before, .sg-frame:hover::after{ width: 18px; height: 18px; }
-
-/* ---------------------------------------------------------------- */
-/* Header — tall, solid, sits in normal flow (no sticky/edge-bleed)  */
-/* ---------------------------------------------------------------- */
-.sg-header{
-  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
-  width: 100%;
-  margin: 0 0 1.8rem 0;
-  padding: 1.5rem 2rem;
-  background: var(--dark);
-  border: 1px solid var(--dark-line);
-  border-left: 5px solid var(--gold);
-  border-radius: 4px;
-  box-shadow: var(--shadow-2);
-  animation: fadeUp .4s var(--ease);
-  box-sizing: border-box;
-}
-.sg-brand{ display: flex; align-items: center; gap: 1rem; }
-.sg-header .sg-brand-mark{
-  width: 52px; height: 52px; padding: 9px;
-  background: var(--dark-2);
-  border: 1px solid var(--dark-line); border-radius: 6px;
-  animation: sway 6s ease-in-out infinite; transform-origin: 50% 90%;
-  flex-shrink: 0;
-}
-.sg-header .sg-leaf-svg{ color: var(--gold); }
-.sg-header .sg-word{
-  font-family: 'Newsreader', serif; font-weight: 700; font-size: 2.1rem;
-  letter-spacing: .01em; color: var(--cream); line-height: 1.05;
-}
-.sg-header .sg-tag{
-  font-family: 'IBM Plex Mono', monospace; font-size: .72rem; color: var(--gold);
-  letter-spacing: .09em; text-transform: uppercase; margin-top: 4px;
-}
-.sg-status{
-  font-family: 'IBM Plex Mono', monospace; font-size: .74rem; letter-spacing: .04em;
-  color: var(--cream); border: 1px solid var(--dark-line);
-  background: var(--dark-2);
-  padding: .5rem .85rem; border-radius: 3px; white-space: nowrap;
-}
-.sg-status .sg-cursor{ display:inline-block; color: var(--gold); animation: blink 1.1s step-end infinite; }
-@media (max-width: 680px){
-  .sg-header{ flex-direction: column; align-items: flex-start; gap: .8rem; }
-  .sg-status{ align-self: flex-start; }
+/* ---------- Sidebar section cards ---------- */
+.sage-card {
+    background: var(--bg-panel-raised);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1rem;
+    margin-bottom: 0.9rem;
 }
 
-/* ---------------------------------------------------------------- */
-/* Hero / field-note card                                            */
-/* ---------------------------------------------------------------- */
-.sg-hero{
-  background: var(--bg-raised);
-  border: 1px solid var(--line-strong);
-  padding: 1.4rem 1.6rem;
-  border-radius: 4px;
-  box-shadow: var(--shadow-1);
-  animation: fadeUp .5s var(--ease);
+/* ---------- Empty-state greeting (Claude/ChatGPT style) ---------- */
+.sage-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 12vh 1rem 2rem 1rem;
+    animation: sage-fade-in 0.5s ease-out;
 }
-.sg-hero .sg-tag{ margin-bottom: .5rem; color: var(--green-dark); }
-.sg-hero h3{ margin: 0 0 .35rem 0; font-family: 'Newsreader', serif; font-weight: 500; font-size: 1.2rem; color: var(--ink); }
-.sg-hero p{ margin: 0; color: var(--ink-muted); font-size: .9rem; }
-
-/* Chat bubbles */
-[data-testid="stChatMessage"]{
-  background: var(--bg-raised) !important;
-  border: 1px solid var(--line-strong) !important;
-  border-radius: 4px !important;
-  box-shadow: var(--shadow-1);
-  animation: fadeUp .3s var(--ease);
+.sage-empty-state .sage-empty-icon {
+    font-size: 2.4rem;
+    margin-bottom: 0.9rem;
+    animation: sage-breathe 3.6s ease-in-out infinite;
+    filter: drop-shadow(0 0 8px var(--sage-glow));
 }
-[data-testid="stChatMessage"] p, [data-testid="stChatMessage"] li{ color: var(--ink) !important; }
-
-/* Buttons — solid dark fill, small radius, mono label */
-.stButton > button, .stDownloadButton > button{
-  background: var(--dark) !important;
-  color: var(--cream) !important;
-  font-family: 'IBM Plex Mono', monospace !important;
-  font-weight: 600 !important;
-  font-size: .8rem !important;
-  letter-spacing: .04em !important;
-  text-transform: uppercase !important;
-  border: 1px solid var(--dark) !important;
-  border-radius: 3px !important;
-  box-shadow: none !important;
-  transition: background .18s, transform .12s var(--ease) !important;
+.sage-empty-state h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.9rem;
+    color: var(--ink);
+    margin: 0 0 0.4rem 0;
 }
-.stButton > button *, .stDownloadButton > button *{ color: var(--cream) !important; }
-.stButton > button:hover, .stDownloadButton > button:hover{
-  background: var(--dark-2) !important;
-  color: var(--gold) !important;
-  border-color: var(--gold) !important;
-  transform: translateY(-1px);
+.sage-empty-state p {
+    font-family: var(--font-body);
+    color: var(--muted);
+    font-size: 0.95rem;
+    max-width: 420px;
 }
-.stButton > button:hover *, .stDownloadButton > button:hover *{ color: var(--gold) !important; }
-.stButton > button:active, .stDownloadButton > button:active{ transform: translateY(1px); }
-
-section[data-testid="stSidebar"] .stButton > button{
-  background: var(--dark) !important; color: var(--cream) !important;
-  border: 1px solid var(--dark) !important;
+@keyframes sage-breathe {
+    0%, 100% { transform: scale(1); opacity: 0.92; }
+    50%      { transform: scale(1.08); opacity: 1; }
 }
-section[data-testid="stSidebar"] .stButton > button *{ color: var(--cream) !important; }
-section[data-testid="stSidebar"] .stButton > button:hover{ background: var(--dark-2) !important; color: var(--gold) !important; border-color: var(--gold) !important; }
-section[data-testid="stSidebar"] .stButton > button:hover *{ color: var(--gold) !important; }
-
-[data-testid="stToggle"] label div[data-checked="true"]{ background: var(--green) !important; }
-[data-testid="stToggle"] label div[data-checked="false"]{ background: var(--bg-raised) !important; border: 1.5px solid var(--ink-faint) !important; }
-[data-testid="stToggle"] p{ color: var(--ink) !important; }
-[data-testid="stToggle"] *{
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  filter: none !important;
-  opacity: 1 !important;
-}
-[data-testid="stToggle"] label div[role="switch"] > div,
-[data-testid="stToggle"] label div[data-checked] > div{
-  background: #ffffff !important;
-  box-shadow: 0 1px 3px rgba(42,32,21,.3) !important;
+@keyframes sage-fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
-[data-testid="stChatInput"], [data-testid="stChatInput"] > div{
-  border: 1px solid var(--line-strong) !important;
-  border-radius: 4px !important;
-  background: var(--bg-raised) !important;
-  box-shadow: none !important;
+/* ---------- Buttons: hover lift, press, ripple, focus glow ---------- */
+.stButton > button, [data-testid="stChatInput"] button, .stDownloadButton > button {
+    background: linear-gradient(135deg, var(--gold), var(--gold-deep)) !important;
+    color: var(--bg-deep) !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-family: var(--font-body) !important;
+    letter-spacing: 0.01em;
+    padding: 0.5rem 1.1rem !important;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
-[data-testid="stChatInput"]:focus-within{ border-color: var(--brown) !important; outline: none !important; box-shadow: none !important; }
-[data-testid="stChatInput"] textarea{
-  background: transparent !important;
-  color: var(--ink) !important;
-  caret-color: var(--ink) !important;
+.stButton > button:hover, .stDownloadButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(217, 169, 78, 0.35);
+    filter: brightness(1.06);
 }
-[data-testid="stChatInput"] textarea::placeholder{ color: var(--ink-faint) !important; opacity: 1 !important; }
-[data-testid="stChatInput"] button{
-  background: var(--dark) !important;
-  border: none !important;
-  border-radius: 3px !important;
+.stButton > button:active, .stDownloadButton > button:active {
+    transform: translateY(0px) scale(0.98);
+    box-shadow: 0 2px 6px rgba(217, 169, 78, 0.25);
 }
-[data-testid="stChatInput"] button svg{ fill: var(--cream) !important; color: var(--cream) !important; }
-[data-testid="stChatInput"] button:hover{ background: var(--dark-2) !important; }
-[data-testid="stChatInput"] button:hover svg{ fill: var(--gold) !important; color: var(--gold) !important; }
+.stButton > button:focus-visible {
+    outline: 2px solid var(--sage) !important;
+    outline-offset: 2px;
+}
 
-/* File-uploader "Browse files" button — separate from .stButton, needs its
-   own override or it inherits Streamlit's default dark-on-dark styling */
-[data-testid="stFileUploaderDropzone"] button{
-  background: var(--dark) !important;
-  color: var(--cream) !important;
-  border: 1px solid var(--dark) !important;
-  border-radius: 3px !important;
+/* Secondary / utility buttons (clear conversation, clear docs) get a quieter treatment */
+[data-testid="stSidebar"] .stButton > button {
+    background: transparent !important;
+    color: var(--muted) !important;
+    border: 1px solid var(--border) !important;
+    font-weight: 600 !important;
+    box-shadow: none !important;
 }
-[data-testid="stFileUploaderDropzone"] button *{ color: var(--cream) !important; fill: var(--cream) !important; }
-[data-testid="stFileUploaderDropzone"] button:hover{ background: var(--dark-2) !important; border-color: var(--gold) !important; }
-[data-testid="stFileUploaderDropzone"] button:hover *{ color: var(--gold) !important; fill: var(--gold) !important; }
-[data-testid="stFileUploaderDropzone"] small, [data-testid="stFileUploaderDropzone"] span{ color: var(--ink-muted) !important; }
+[data-testid="stSidebar"] .stButton > button:hover {
+    color: var(--sage) !important;
+    border-color: var(--sage) !important;
+    background: rgba(143, 174, 124, 0.08) !important;
+    box-shadow: 0 0 0 3px var(--sage-glow);
+}
 
-[data-testid="stFileUploaderDropzone"]{
-  background: var(--bg-raised) !important;
-  border: 1px dashed var(--line-strong) !important;
-  border-radius: 4px !important;
-  transition: border-color .2s;
+/* ---------- Chat messages: fade/slide in, distinct user vs assistant tone ---------- */
+[data-testid="stChatMessage"] {
+    animation: sage-msg-in 0.35s ease-out;
+    border-radius: 16px !important;
+    border: 1px solid var(--border) !important;
+    padding: 0.25rem 0.4rem !important;
+    margin-bottom: 0.6rem !important;
 }
-[data-testid="stFileUploaderDropzone"]:hover{ border-color: var(--brown) !important; }
+@keyframes sage-msg-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+[data-testid="stChatMessageAvatarUser"] {
+    background: linear-gradient(135deg, var(--gold), var(--gold-deep)) !important;
+}
+[data-testid="stChatMessageAvatarAssistant"] {
+    background: linear-gradient(135deg, var(--sage), var(--sage-deep)) !important;
+}
 
-/* ---------------------------------------------------------------- */
-/* Footer — engineering drawing title block                          */
-/* ---------------------------------------------------------------- */
-.sg-footer{ margin: 3rem 0 0 0; }
-.sg-titleblock{
-  border: 1px solid var(--dark-line);
-  background: var(--dark);
-  border-radius: 4px;
-  box-shadow: var(--shadow-2);
+/* ---------- Chat input: focus glow ---------- */
+[data-testid="stChatInput"] {
+    border: 1px solid var(--border) !important;
+    border-radius: 14px !important;
+    background: var(--bg-panel-raised) !important;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
-.sg-tb-head{
-  display: flex; align-items: center; gap: .6rem;
-  padding: .8rem 1.1rem; border-bottom: 1px solid var(--dark-line);
-  background: var(--dark-2);
-  border-radius: 4px 4px 0 0;
+[data-testid="stChatInput"]:focus-within {
+    border-color: var(--sage) !important;
+    box-shadow: 0 0 0 4px var(--sage-glow) !important;
 }
-.sg-tb-head .sg-brand-mark{ width: 24px; height: 24px; padding: 3px; animation: none; background: transparent; border: none; }
-.sg-tb-head .sg-leaf-svg{ color: var(--gold); }
-.sg-tb-head span{
-  font-family: 'IBM Plex Mono', monospace; font-size: .72rem; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--gold);
+
+/* ---------- Toggle switch ---------- */
+[data-testid="stToggle"] label div[data-checked="true"] {
+    background: var(--sage) !important;
 }
-.sg-tb-grid{ display: grid; grid-template-columns: repeat(4, 1fr); }
-@media (max-width: 700px){ .sg-tb-grid{ grid-template-columns: repeat(2, 1fr); } }
-.sg-tb-cell{ padding: .9rem 1.1rem; border-right: 1px solid var(--dark-line); border-top: 1px solid var(--dark-line); }
-.sg-tb-cell:nth-child(4n){ border-right: none; }
-.sg-tb-label{
-  font-family: 'IBM Plex Mono', monospace; font-size: .64rem; letter-spacing: .08em;
-  text-transform: uppercase; color: rgba(244,236,216,.55); margin-bottom: .3rem; display: block;
+
+/* ---------- File uploader ---------- */
+[data-testid="stFileUploader"] section {
+    background: var(--bg-panel-raised) !important;
+    border: 1.5px dashed var(--border) !important;
+    border-radius: 12px !important;
+    transition: border-color 0.2s ease, background 0.2s ease;
 }
-.sg-tb-value{ font-size: .87rem; color: var(--cream); line-height: 1.5; }
-.sg-tb-value a{ color: var(--gold); text-decoration: none; border-bottom: 1px solid var(--gold); font-weight: 500; }
-.sg-tb-value a:hover{ color: var(--cream); border-color: var(--cream); }
-.sg-tb-bottom{
-  padding: .6rem 1.1rem; border-top: 1px solid var(--dark-line);
-  display: flex; justify-content: space-between; flex-wrap: wrap; gap: .4rem;
-  font-family: 'IBM Plex Mono', monospace; font-size: .66rem; color: rgba(244,236,216,.55);
+[data-testid="stFileUploader"] section:hover {
+    border-color: var(--sage) !important;
+    background: rgba(143, 174, 124, 0.06) !important;
 }
+
+/* ---------- Code blocks ---------- */
+code, pre, .stCodeBlock, [data-testid="stCodeBlock"] {
+    font-family: var(--font-mono) !important;
+}
+[data-testid="stCodeBlock"] {
+    border-radius: 12px !important;
+    border: 1px solid var(--border) !important;
+}
+
+/* ---------- Alerts (success/error/warning) recolored to fit palette ---------- */
+[data-testid="stAlert"] {
+    border-radius: 12px !important;
+    border: 1px solid var(--border) !important;
+}
+
+/* ---------- Divider ---------- */
+hr { border-color: var(--border) !important; }
+
+/* ---------- Footer signature ---------- */
+.sage-footer {
+    margin-top: 2.5rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-family: var(--font-body);
+}
+.sage-footer a {
+    color: var(--sage);
+    text-decoration: none;
+    font-weight: 600;
+}
+.sage-footer a:hover { text-decoration: underline; }
+
+/* ---------- Respect reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+    .sage-empty-icon, [data-testid="stChatMessage"] {
+        animation: none !important;
+    }
+}
+</style>
+"""
+
+# Best-effort SEO/meta tags. Streamlit is a client-rendered app, so this
+# will not produce full server-side-rendered SEO the way a static site
+# would, but it does set the browser tab title, favicon, and description
+# meta tag used by link previews / some crawlers.
+SEO_INJECTION = f"""
+<script>
+    try {{
+        const doc = window.parent.document;
+        doc.title = "{PAGE_TITLE}";
+
+        function setMeta(name, content, isProperty) {{
+            const attr = isProperty ? "property" : "name";
+            let tag = doc.querySelector(`meta[${{attr}}="${{name}}"]`);
+            if (!tag) {{
+                tag = doc.createElement("meta");
+                tag.setAttribute(attr, name);
+                doc.head.appendChild(tag);
+            }}
+            tag.setAttribute("content", content);
+        }}
+
+        setMeta("description", "{PAGE_DESCRIPTION}", false);
+        setMeta("og:title", "{PAGE_TITLE}", true);
+        setMeta("og:description", "{PAGE_DESCRIPTION}", true);
+        setMeta("og:type", "website", true);
+        setMeta("twitter:card", "summary", true);
+        setMeta("twitter:title", "{PAGE_TITLE}", true);
+        setMeta("twitter:description", "{PAGE_DESCRIPTION}", true);
+    }} catch (e) {{
+        // Cross-origin/frame restrictions can block this in some embeds;
+        // fail silently since it's a progressive enhancement, not required.
+    }}
+</script>
 """
 
 
-def inject_theme() -> None:
-    """Injects fonts + global CSS. Call once, right after st.set_page_config()."""
-    st.markdown(_CSS, unsafe_allow_html=True)
+def inject_theme(st_module):
+    """Call once near the top of app.py to apply fonts, CSS, and SEO tags."""
+    st_module.markdown(FONT_IMPORTS, unsafe_allow_html=True)
+    st_module.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+    st_module.components.v1.html(SEO_INJECTION, height=0, width=0)
 
 
-def render_header() -> None:
-    """Tall, solid header sitting in normal document flow — no sticky, no clipping."""
-    st.markdown(
-        f"""
-        <div class="sg-header">
-          <div class="sg-brand">
-            <div class="sg-brand-mark">{LEAF_SVG}</div>
-            <div>
-              <div class="sg-word">Sage AI</div>
-              <div class="sg-tag">Document &amp; Code Intelligence</div>
-            </div>
-          </div>
-          <div class="sg-status">STATUS: ACTIVE<span class="sg-cursor">▌</span></div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def render_hero() -> None:
-    """Field-note style welcome card, framed like a diagram callout."""
-    st.markdown(
+def render_empty_state(st_module):
+    """
+    Centered startup greeting shown only before the first message —
+    same pattern as Claude/ChatGPT's empty state. Disappears automatically
+    once st.session_state.messages is non-empty, since the caller only
+    invokes this when there's no conversation yet.
+    """
+    st_module.markdown(
         """
-        <div class="sg-hero sg-frame">
-          <div class="sg-tag">Field Note — Getting Started</div>
-          <h3>Ask a question, upload a document, or ask for some code.</h3>
-          <p>Try: "Summarize this document" or "Write a function to check if a number is prime"</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def render_footer() -> None:
-    """Footer built as an engineering-drawing title block instead of a generic link list."""
-    st.markdown(
-        f"""
-        <div class="sg-footer">
-          <div class="sg-titleblock">
-            <div class="sg-tb-head">
-              <div class="sg-brand-mark">{LEAF_SVG}</div>
-              <span>Sage AI — Title Block</span>
-            </div>
-            <div class="sg-tb-grid">
-              <div class="sg-tb-cell">
-                <span class="sg-tb-label">Project</span>
-                <div class="sg-tb-value">Sage AI — document &amp; code assistant</div>
-              </div>
-              <div class="sg-tb-cell">
-                <span class="sg-tb-label">Modules</span>
-                <div class="sg-tb-value">Chat · RAG · Code Exec</div>
-              </div>
-              <div class="sg-tb-cell">
-                <span class="sg-tb-label">Stack</span>
-                <div class="sg-tb-value">Groq · Streamlit · ChromaDB</div>
-              </div>
-              <div class="sg-tb-cell">
-                <span class="sg-tb-label">Drawn By</span>
-                <div class="sg-tb-value">{AUTHOR}</div>
-              </div>
-              <div class="sg-tb-cell">
-                <span class="sg-tb-label">Rev</span>
-                <div class="sg-tb-value">2026.1</div>
-              </div>
-              <div class="sg-tb-cell">
-                <span class="sg-tb-label">Source</span>
-                <div class="sg-tb-value"><a href="{GITHUB_URL}" target="_blank">GitHub ↗</a></div>
-              </div>
-              <div class="sg-tb-cell">
-                <span class="sg-tb-label">Live</span>
-                <div class="sg-tb-value"><a href="{LIVE_URL}" target="_blank">Demo ↗</a></div>
-              </div>
-              <div class="sg-tb-cell">
-                <span class="sg-tb-label">License</span>
-                <div class="sg-tb-value">Personal project</div>
-              </div>
-            </div>
-            <div class="sg-tb-bottom">
-              <span>© 2026 SAGE AI</span>
-              <span>SHEET 1 OF 1</span>
-            </div>
-          </div>
+        <div class="sage-empty-state">
+            <span class="sage-empty-icon">🌿</span>
+            <h1>Hi, I'm Sage</h1>
+            <p>Ask a question, upload a document, or ask for some code to get started.</p>
         </div>
         """,
         unsafe_allow_html=True,
