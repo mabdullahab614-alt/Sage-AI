@@ -247,15 +247,42 @@ html, body, [class*="css"] {
     80%      { transform: rotate(1deg); }
 }
 
-/* ---------- Sidebar chat row icon buttons (star / rename / delete):
-   force them small and square so they never stretch wide, regardless
-   of the narrow column they sit in. ---------- */
+/* ---------- Sidebar chat row icon buttons (star / rename / delete) ----------
+   Forced to identical small square "chip" boxes — fixed pixel size (not
+   percentage/aspect-ratio, which rendered inconsistently across the three
+   narrow columns) with their own background+border so they read as one
+   consistent icon-button family regardless of Streamlit's default button
+   type/padding underneath. */
 .sage-chatrow-icon .stButton > button {
-    padding: 0.3rem 0 !important;
-    min-width: 0 !important;
-    width: 100% !important;
-    aspect-ratio: 1 / 1 !important;
+    background: var(--bg-panel-raised) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--muted) !important;
+    border-radius: 8px !important;
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    max-width: 34px !important;
+    padding: 0 !important;
     font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: none !important;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.sage-chatrow-icon .stButton > button p {
+    margin: 0 !important;
+    line-height: 1 !important;
+    font-size: 0.85rem !important;
+}
+.sage-chatrow-icon .stButton > button:hover {
+    border-color: var(--sage) !important;
+    color: var(--sage) !important;
+    background: rgba(143, 174, 124, 0.1) !important;
+    animation: none !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 /* ---------- Chat messages ---------- */
