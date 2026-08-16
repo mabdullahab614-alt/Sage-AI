@@ -164,6 +164,21 @@ if "rag_auto_synced" not in st.session_state:
         st.session_state.use_rag_toggle = True
     st.session_state.rag_auto_synced = True
 
+# ---- Apply any "please turn RAG on" request from a PREVIOUS run ----
+# Streamlit forbids writing to st.session_state["use_rag_toggle"] after the
+# st.toggle(key="use_rag_toggle") widget has already been instantiated in
+# the SAME script run — that's exactly what _index_uploaded_file() used to
+# do (it runs below, in the send-message block, which executes after the
+# sidebar's st.toggle() has already run this turn), and it's why sending a
+# message with a newly attached document crashed with a StreamlitAPIException.
+# Fix: _index_uploaded_file() now only sets a plain flag
+# (st.session_state.rag_force_on). That flag gets consumed HERE, before the
+# sidebar (and its st.toggle) render — safe, because nothing with this key
+# has been instantiated yet this run. The st.rerun() at the end of the
+# send-message flow is what makes this take effect on the very next run.
+if st.session_state.pop("rag_force_on", False):
+    st.session_state.use_rag_toggle = True
+
 for _conv in st.session_state.conversations.values():
     _conv.setdefault("starred", False)
 
@@ -312,14 +327,14 @@ def _image_to_data_url(uf) -> str:
 
 def _index_uploaded_file(uf) -> None:
     if uf.name in st.session_state.uploaded_filenames:
-        st.session_state.use_rag_toggle = True
+        st.session_state.rag_force_on = True
         return
     try:
         with st.spinner(f"Reading {uf.name}..."):
             parsed = parse_document(uf)
             num_chunks = st.session_state.rag_store.add_document(parsed["filename"], parsed["text"])
         st.session_state.uploaded_filenames.append(uf.name)
-        st.session_state.use_rag_toggle = True
+        st.session_state.rag_force_on = True
         st.toast(f"{uf.name} indexed — {num_chunks} chunks ready")
     except UnsupportedFileTypeError as e:
         st.error(str(e))
