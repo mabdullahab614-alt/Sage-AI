@@ -69,43 +69,62 @@ def regenerate_last_response(conv_id: str) -> None:
 def render_message_actions(conv_id: str, idx: int, content: str, is_last: bool) -> None:
     """Copy button for an assistant message."""
     b64 = base64.b64encode(content.encode("utf-8")).decode("ascii")
-    copy_html = (
-        '<div class="sage-msg-actions">'
-        f'<button class="sage-action-btn" title="Copy" data-b64="{b64}" '
-        "onclick=\""
-        "const bytes = Uint8Array.from(atob(this.dataset.b64), c => c.charCodeAt(0));"
-        "const text = new TextDecoder().decode(bytes);"
-        "const btn = this;"
-        "function fallbackCopy(t) {"
-        "  const ta = document.createElement('textarea');"
-        "  ta.value = t;"
-        "  ta.style.position = 'fixed';"
-        "  ta.style.left = '-9999px';"
-        "  document.body.appendChild(ta);"
-        "  ta.focus(); ta.select();"
-        "  try { document.execCommand('copy'); } catch (e) {}"
-        "  document.body.removeChild(ta);"
-        "}"
-        # Streamlit renders inside a sandboxed iframe, where
-        # navigator.clipboard.writeText silently fails (no clipboard-write
-        # permission granted to the frame) even though it looks like a
-        # normal button click. That was the whole bug — the fallback
-        # execCommand('copy') path below is what actually works there.
-        "if (navigator.clipboard && navigator.clipboard.writeText) {"
-        "  navigator.clipboard.writeText(text).then(() => {"
-        "    btn.innerText = 'Copied'; setTimeout(() => btn.innerText = 'Copy', 1200);"
-        "  }).catch(() => {"
-        "    fallbackCopy(text);"
-        "    btn.innerText = 'Copied'; setTimeout(() => btn.innerText = 'Copy', 1200);"
-        "  });"
-        "} else {"
-        "  fallbackCopy(text);"
-        "  btn.innerText = 'Copied'; setTimeout(() => btn.innerText = 'Copy', 1200);"
-        "}"
-        "\">Copy</button>"
-        "</div>"
-    )
-    st.markdown(copy_html, unsafe_allow_html=True)
+    btn_id = f"copy-btn-{conv_id}-{idx}"
+    # IMPORTANT: st.markdown(..., unsafe_allow_html=True) silently strips
+    # onclick="..." attributes for security, even though the rest of the
+    # HTML renders fine — that was the real reason Copy never fired.
+    # components.v1.html renders in its own iframe and DOES execute a real
+    # <script> tag, so the click handler is attached with addEventListener
+    # instead of an inline attribute. execCommand('copy') is used as the
+    # actual copy mechanism since the async Clipboard API is often blocked
+    # inside that iframe without an explicit clipboard-write permission.
+    html = f"""
+    <div style="font-family:'Plus Jakarta Sans',-apple-system,sans-serif;">
+      <button id="{btn_id}" style="
+          background:transparent;border:1px solid rgba(143,174,124,0.3);
+          color:#9CA394;border-radius:8px;padding:0.28rem 0.7rem;
+          font-size:0.78rem;font-family:inherit;cursor:pointer;">Copy</button>
+    </div>
+    <script>
+      (function() {{
+        const btn = document.getElementById("{btn_id}");
+        const b64 = "{b64}";
+        function fallbackCopy(t) {{
+          const ta = document.createElement('textarea');
+          ta.value = t;
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          try {{ document.execCommand('copy'); }} catch (e) {{}}
+          document.body.removeChild(ta);
+        }}
+        btn.addEventListener("click", function() {{
+          const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+          const text = new TextDecoder().decode(bytes);
+          function showCopied() {{
+            btn.innerText = "Copied";
+            btn.style.color = "#8FAE7C";
+            btn.style.borderColor = "#8FAE7C";
+            setTimeout(function() {{
+              btn.innerText = "Copy";
+              btn.style.color = "#9CA394";
+              btn.style.borderColor = "rgba(143,174,124,0.3)";
+            }}, 1200);
+          }}
+          if (navigator.clipboard && navigator.clipboard.writeText) {{
+            navigator.clipboard.writeText(text).then(showCopied).catch(function() {{
+              fallbackCopy(text); showCopied();
+            }});
+          }} else {{
+            fallbackCopy(text); showCopied();
+          }}
+        }});
+      }})();
+    </script>
+    """
+    st.components.v1.html(html, height=42)
 
 
 def render_code_run_buttons(code_blocks: list[str], key_prefix: str) -> None:
