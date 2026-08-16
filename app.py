@@ -8,13 +8,20 @@ actions (copy, regenerate, feedback).
 """
 
 import base64
+import hashlib
 import uuid
 
 import streamlit as st
 
 from utils.document_parser import parse_document, UnsupportedFileTypeError, EmptyDocumentError
 from utils.rag import RAGStore, build_rag_prompt
-from utils.llm import chat_completion, extract_python_code_blocks, AVAILABLE_MODELS, DEFAULT_MODEL
+from utils.llm import (
+    chat_completion,
+    extract_python_code_blocks,
+    transcribe_audio,
+    AVAILABLE_MODELS,
+    DEFAULT_MODEL,
+)
 from utils.code_executor import execute_python
 from utils.theme import inject_theme, render_empty_state, PAGE_TITLE, PAGE_ICON
 
@@ -118,6 +125,8 @@ if "feedback" not in st.session_state:
     st.session_state.feedback = {}
 if "selected_model" not in st.session_state:
     st.session_state.selected_model = DEFAULT_MODEL
+if "last_audio_hash" not in st.session_state:
+    st.session_state.last_audio_hash = None
 
 current_conv = st.session_state.conversations[st.session_state.current_id]
 messages = current_conv["messages"]
@@ -246,7 +255,31 @@ for i, msg in enumerate(messages):
             code_blocks = extract_python_code_blocks(msg["content"])
             render_code_run_buttons(code_blocks, key_prefix=f"run_{st.session_state.current_id}_{i}")
 
-prompt = st.chat_input("Ask anything, ask about your documents, or ask for code...")
+prompt = None
+
+st.markdown('<p class="sage-eyebrow" style="margin:0.4rem 0 0.2rem 0;">Voice input (beta)</p>', unsafe_allow_html=True)
+audio_value = st.audio_input("Record a voice message", label_visibility="collapsed")
+if audio_value is not None:
+    audio_bytes = audio_value.getvalue()
+    audio_hash = hashlib.md5(audio_bytes).hexdigest()
+    if audio_hash != st.session_state.last_audio_hash:
+        st.session_state.last_audio_hash = audio_hash
+        try:
+            with st.spinner("Transcribing your voice message..."):
+                transcribed = transcribe_audio(audio_bytes, filename=getattr(audio_value, "name", "voice.wav"))
+            transcribed = (transcribed or "").strip()
+            if transcribed:
+                prompt = transcribed
+            else:
+                st.warning("Didn't catch any speech in that recording — try again.")
+        except RuntimeError as e:
+            st.error(str(e))
+        except Exception as e:
+            st.error(f"Transcription failed: {e}")
+
+typed_prompt = st.chat_input("Ask anything, ask about your documents, or ask for code...")
+if typed_prompt:
+    prompt = typed_prompt
 
 if prompt:
     messages.append({"role": "user", "content": prompt})
