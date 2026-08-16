@@ -87,7 +87,7 @@ html, body, [class*="css"] {
     margin-bottom: 0.9rem;
 }
 
-/* ---------- Empty-state greeting (Claude/ChatGPT style) ---------- */
+/* ---------- Empty-state greeting (Claude/ChatGPT style, staged entrance) ---------- */
 .sage-empty-state {
     display: flex;
     flex-direction: column;
@@ -95,33 +95,44 @@ html, body, [class*="css"] {
     justify-content: center;
     text-align: center;
     padding: 12vh 1rem 2rem 1rem;
-    animation: sage-fade-in 0.5s ease-out;
 }
 .sage-empty-state .sage-empty-icon {
-    font-size: 2.4rem;
-    margin-bottom: 0.9rem;
-    animation: sage-breathe 3.6s ease-in-out infinite;
-    filter: drop-shadow(0 0 8px var(--sage-glow));
+    display: inline-block;
+    font-size: 2.6rem;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 0 10px var(--sage-glow));
+    animation:
+        sage-icon-pop-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 1,
+        sage-breathe 3.6s ease-in-out 0.7s infinite;
 }
 .sage-empty-state h1 {
     font-family: var(--font-display);
     font-weight: 600;
-    font-size: 1.9rem;
+    font-size: 2.05rem;
     color: var(--ink);
-    margin: 0 0 0.4rem 0;
+    margin: 0 0 0.5rem 0;
+    opacity: 0;
+    animation: sage-cascade-in 0.55s ease-out 0.22s forwards;
 }
 .sage-empty-state p {
     font-family: var(--font-body);
     color: var(--muted);
-    font-size: 0.95rem;
-    max-width: 420px;
+    font-size: 0.97rem;
+    max-width: 440px;
+    opacity: 0;
+    animation: sage-cascade-in 0.55s ease-out 0.4s forwards;
 }
 @keyframes sage-breathe {
     0%, 100% { transform: scale(1); opacity: 0.92; }
     50%      { transform: scale(1.08); opacity: 1; }
 }
-@keyframes sage-fade-in {
-    from { opacity: 0; transform: translateY(6px); }
+@keyframes sage-icon-pop-in {
+    0%   { opacity: 0; transform: scale(0.3) rotate(-25deg); }
+    60%  { opacity: 1; transform: scale(1.15) rotate(6deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+@keyframes sage-cascade-in {
+    from { opacity: 0; transform: translateY(14px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -188,7 +199,7 @@ html, body, [class*="css"] {
     background: linear-gradient(135deg, var(--sage), var(--sage-deep)) !important;
 }
 
-/* ---------- Chat input: focus glow ---------- */
+/* ---------- Chat input: focus glow (target the ACTUAL textarea, not just wrapper) ---------- */
 [data-testid="stChatInput"] {
     border: 1px solid var(--border) !important;
     border-radius: 14px !important;
@@ -199,22 +210,60 @@ html, body, [class*="css"] {
     border-color: var(--sage) !important;
     box-shadow: 0 0 0 4px var(--sage-glow) !important;
 }
+[data-testid="stChatInputTextArea"] {
+    background: var(--bg-panel-raised) !important;
+    color: var(--ink) !important;
+    caret-color: var(--sage) !important;
+}
+[data-testid="stChatInputTextArea"]::placeholder {
+    color: var(--muted) !important;
+    opacity: 1 !important;
+}
 
 /* ---------- Toggle switch ---------- */
 [data-testid="stToggle"] label div[data-checked="true"] {
     background: var(--sage) !important;
 }
 
-/* ---------- File uploader ---------- */
-[data-testid="stFileUploader"] section {
+/* ---------- File uploader (target actual dropzone + instructions + browse button) ---------- */
+[data-testid="stFileUploader"] section,
+[data-testid="stFileUploaderDropzone"] {
     background: var(--bg-panel-raised) !important;
     border: 1.5px dashed var(--border) !important;
     border-radius: 12px !important;
     transition: border-color 0.2s ease, background 0.2s ease;
 }
-[data-testid="stFileUploader"] section:hover {
+[data-testid="stFileUploader"] section:hover,
+[data-testid="stFileUploaderDropzone"]:hover {
     border-color: var(--sage) !important;
     background: rgba(143, 174, 124, 0.06) !important;
+}
+[data-testid="stFileUploaderDropzoneInstructions"],
+[data-testid="stFileUploaderDropzoneInstructions"] * {
+    color: var(--ink) !important;
+}
+[data-testid="stFileUploaderDropzoneInstructions"] small {
+    color: var(--muted) !important;
+}
+
+/* Any Streamlit "secondary" base button (this is what the uploader's Browse
+   button actually is under the hood — it isn't wrapped in .stButton, so the
+   .stButton > button rule above never reached it, leaving it on Streamlit's
+   default light styling and causing the invisible white-on-white text) */
+[data-testid^="stBaseButton"] {
+    background: var(--bg-panel-raised) !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    font-family: var(--font-body) !important;
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+[data-testid^="stBaseButton"]:hover {
+    border-color: var(--sage) !important;
+    color: var(--sage) !important;
+    background: rgba(143, 174, 124, 0.08) !important;
+    transform: translateY(-1px);
 }
 
 /* ---------- Code blocks ---------- */
@@ -254,8 +303,12 @@ hr { border-color: var(--border) !important; }
 
 /* ---------- Respect reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
-    .sage-empty-icon, [data-testid="stChatMessage"] {
+    .sage-empty-icon,
+    .sage-empty-state h1,
+    .sage-empty-state p,
+    [data-testid="stChatMessage"] {
         animation: none !important;
+        opacity: 1 !important;
     }
 }
 </style>
