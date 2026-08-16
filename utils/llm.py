@@ -4,27 +4,24 @@ Thin wrapper around the Groq API for chat + code generation.
 import os
 from groq import Groq
 
-# Groq-hosted models available for selection in the UI. Verified against
-# Groq's own "Production Models" list (console.groq.com/docs/models) — only
-# models that appear there are included. llama3-70b-8192 and gemma2-9b-it
-# were removed from that list (retired) and are deliberately NOT offered
-# here; openai/gpt-oss-120b and openai/gpt-oss-20b are their current
-# production-tier replacements. If Groq retires or renames a model, update
-# this list — the app will surface Groq's own error message if a stale
-# model id is selected, it won't fail silently.
+# IMPORTANT: llama-3.3-70b-versatile and llama-3.1-8b-instant were
+# deprecated by Groq (announced June 17, 2026) and are shut down as of
+# August 16, 2026 — selecting either now returns a hard API error, not a
+# slow/degraded response. They are deliberately NOT listed below. Current
+# production replacements per Groq's own migration guidance:
+# https://console.groq.com/docs/deprecations
 AVAILABLE_MODELS = {
-    "Llama 3.3 70B — best all-round (default)": "llama-3.3-70b-versatile",
-    "Llama 3.1 8B — fastest": "llama-3.1-8b-instant",
-    "GPT-OSS 120B — OpenAI open-weight, reasoning": "openai/gpt-oss-120b",
-    "GPT-OSS 20B — OpenAI open-weight, fast": "openai/gpt-oss-20b",
+    "GPT-OSS 120B — best all-round (default)": "openai/gpt-oss-120b",
+    "GPT-OSS 20B — fastest": "openai/gpt-oss-20b",
+    "Qwen 3.6 27B — flagship reasoning + coding": "qwen/qwen3.6-27b",
 }
-DEFAULT_MODEL = "llama-3.3-70b-versatile"
+DEFAULT_MODEL = "openai/gpt-oss-120b"
 
-# Multimodal model — the only one in this app's lineup that can actually
-# "see" an attached image. Not listed in AVAILABLE_MODELS (the model picker
-# is for text chat); instead, app.py auto-switches to this model just for
-# the specific turn where the user attaches a photo, then goes back to
-# whatever text model was selected.
+# Vision-capable model for image attachments. qwen/qwen3.6-27b is Groq's
+# current multimodal option, but Groq itself documents it as a *preview*
+# model (evaluation, not production) — so occasional flakiness/rate limits
+# here are a known Groq-side limitation, not a bug in this app. There is
+# currently no stable production vision model on Groq to fall back to.
 VISION_MODEL = "qwen/qwen3.6-27b"
 
 SYSTEM_PROMPT = (
@@ -47,15 +44,6 @@ def get_client() -> Groq:
 
 
 def chat_completion(messages: list[dict], model: str = DEFAULT_MODEL, temperature: float = 0.4) -> str:
-    """
-    messages: list of {"role": "user"|"assistant"|"system", "content": str | list}
-    "content" can be a plain string (normal text turn) OR a list of content
-    parts like [{"type": "text", "text": "..."}, {"type": "image_url",
-    "image_url": {"url": "data:image/png;base64,..."}}] for a multimodal
-    turn — pass VISION_MODEL as `model` when using image content parts.
-    model: any Groq model id (see AVAILABLE_MODELS for the ones surfaced in the UI)
-    Returns the assistant's reply text.
-    """
     client = get_client()
     full_messages = [{"role": "system", "content": SYSTEM_PROMPT}] + messages
     response = client.chat.completions.create(
@@ -68,19 +56,12 @@ def chat_completion(messages: list[dict], model: str = DEFAULT_MODEL, temperatur
 
 
 def transcribe_audio(audio_bytes: bytes, filename: str = "voice.wav") -> str:
-    """
-    Sends recorded audio to Groq's hosted Whisper model and returns the
-    transcribed text. Accepts mp3/mp4/mpeg/mpga/m4a/wav/webm, up to 25MB —
-    exactly what Streamlit's st.audio_input records, so no conversion needed.
-    """
     client = get_client()
     transcription = client.audio.transcriptions.create(
         file=(filename, audio_bytes),
         model="whisper-large-v3-turbo",
         response_format="text",
     )
-    # response_format="text" returns a plain string in the Groq SDK; guard
-    # for SDK versions that might still hand back an object with .text.
     return transcription if isinstance(transcription, str) else transcription.text
 
 
