@@ -70,14 +70,6 @@ def render_message_actions(conv_id: str, idx: int, content: str, is_last: bool) 
     """Copy button for an assistant message."""
     b64 = base64.b64encode(content.encode("utf-8")).decode("ascii")
     btn_id = f"copy-btn-{conv_id}-{idx}"
-    # IMPORTANT: st.markdown(..., unsafe_allow_html=True) silently strips
-    # onclick="..." attributes for security, even though the rest of the
-    # HTML renders fine — that was the real reason Copy never fired.
-    # components.v1.html renders in its own iframe and DOES execute a real
-    # <script> tag, so the click handler is attached with addEventListener
-    # instead of an inline attribute. execCommand('copy') is used as the
-    # actual copy mechanism since the async Clipboard API is often blocked
-    # inside that iframe without an explicit clipboard-write permission.
     html = f"""
     <div style="font-family:'Plus Jakarta Sans',-apple-system,sans-serif;">
       <button id="{btn_id}" style="
@@ -162,26 +154,16 @@ if "renaming_id" not in st.session_state:
 if "pending_files" not in st.session_state:
     st.session_state.pending_files = []          # list of UploadedFile objects, queued via "+"
 if "pending_links" not in st.session_state:
-    st.session_state.pending_links = []           # list of url strings, queued via "+"
+    st.session_state.pending_links = []            # list of url strings, queued via "+"
 if "uploader_version" not in st.session_state:
-    # Bumping this changes the file_uploader widget keys below, forcing
-    # Streamlit to give us a fresh (empty) uploader instead of one that
-    # still remembers the previously-selected files. Without this,
-    # clearing pending_files alone does nothing because the uploader
-    # widget itself keeps re-feeding the same files back in on rerun.
     st.session_state.uploader_version = 0
 if "use_rag_toggle" not in st.session_state:
     st.session_state.use_rag_toggle = bool(st.session_state.uploaded_filenames)
 if "rag_auto_synced" not in st.session_state:
-    # Chroma's persistent store can already contain documents from an
-    # earlier session (page reload, etc.) even though uploaded_filenames
-    # (a plain session list) has reset to empty. Catch that case once per
-    # session so the toggle reflects reality instead of defaulting off.
     if st.session_state.rag_store.has_documents():
         st.session_state.use_rag_toggle = True
     st.session_state.rag_auto_synced = True
 
-# Backfill "starred" on conversations created before this feature existed.
 for _conv in st.session_state.conversations.values():
     _conv.setdefault("starred", False)
 
@@ -190,8 +172,6 @@ messages = current_conv["messages"]
 
 
 def _reset_pending_attachments() -> None:
-    """Clears queued attachments AND resets the uploader widgets so they
-    don't silently re-populate pending_files with the same files again."""
     st.session_state.pending_files = []
     st.session_state.pending_links = []
     st.session_state.uploader_version += 1
@@ -211,12 +191,10 @@ with st.sidebar:
 
     st.markdown('<p class="sage-eyebrow">Chats</p>', unsafe_allow_html=True)
 
-    # Most-recent-first.
     chat_items = list(st.session_state.conversations.items())[::-1]
 
     for cid, conv in chat_items:
         if st.session_state.renaming_id == cid:
-            # ---- Rename mode: text input + save/cancel ----
             new_title = st.text_input(
                 "Rename chat", value=conv["title"], key=f"rename_input_{cid}",
                 label_visibility="collapsed",
@@ -310,10 +288,6 @@ for i, msg in enumerate(messages):
             render_code_run_buttons(code_blocks, key_prefix=f"run_{st.session_state.current_id}_{i}")
 
 if messages:
-    # Auto-scroll to the latest message instead of leaving the user
-    # stranded wherever the page happened to be — components.v1.html runs
-    # a real <script> (unlike st.markdown, which strips it), and it can
-    # reach into the parent page's DOM since it's embedded inline in it.
     st.components.v1.html(
         """
         <script>
@@ -330,8 +304,6 @@ prompt = None
 
 
 def _image_to_data_url(uf) -> str:
-    """Encodes an uploaded image file as a base64 data: URL for Groq's
-    multimodal (vision) message format."""
     ext = uf.name.lower().rsplit(".", 1)[-1]
     mime = "image/jpeg" if ext == "jpg" else f"image/{ext}"
     b64 = base64.b64encode(uf.getvalue()).decode("ascii")
@@ -339,11 +311,7 @@ def _image_to_data_url(uf) -> str:
 
 
 def _index_uploaded_file(uf) -> None:
-    """Parses + indexes one uploaded file into the RAG store."""
     if uf.name in st.session_state.uploaded_filenames:
-        # Already indexed earlier in this session — still make sure RAG
-        # grounding is on for this turn, since this is exactly the case
-        # that was silently skipping the toggle-on step before.
         st.session_state.use_rag_toggle = True
         return
     try:
@@ -351,10 +319,6 @@ def _index_uploaded_file(uf) -> None:
             parsed = parse_document(uf)
             num_chunks = st.session_state.rag_store.add_document(parsed["filename"], parsed["text"])
         st.session_state.uploaded_filenames.append(uf.name)
-        # A document just got indexed this turn — make sure RAG grounding
-        # is actually switched on for the reply we're about to generate,
-        # instead of relying on a toggle value that was read before this
-        # file existed.
         st.session_state.use_rag_toggle = True
         st.toast(f"{uf.name} indexed — {num_chunks} chunks ready")
     except UnsupportedFileTypeError as e:
@@ -365,18 +329,13 @@ def _index_uploaded_file(uf) -> None:
         st.error(f"Couldn't process {uf.name}: {e}")
 
 
-# ---------- Toolbar row: attach ("+") + model + voice ----------
-# Streamlit's native chat_input "+" only opens a raw file dialog — it can't
-# show a menu. This custom "+" popover replaces that: it opens a real menu
-# with Photo / File / Link tabs, queues what you pick as chips above the
-# input, and everything gets attached when you hit send. accept_file is
-# turned off on chat_input below so there's only ONE attach control, not two.
-toolbar_col1, toolbar_col2, toolbar_col3, toolbar_spacer = st.columns([0.07, 0.07, 0.07, 0.79])
+# ---------- Compact Toolbar Row (Mobile & Desktop Optimized) ----------
+toolbar_col1, toolbar_col2, toolbar_col3 = st.columns([1, 1, 1])
 
-uv = st.session_state.uploader_version  # current uploader "generation"
+uv = st.session_state.uploader_version
 
 with toolbar_col1:
-    with st.popover("＋", use_container_width=True):
+    with st.popover("📎 Attach", use_container_width=True):
         st.caption("Add to this message")
         tab_photo, tab_file, tab_link = st.tabs(["📷 Photo", "📄 File", "🔗 Link"])
 
@@ -416,8 +375,8 @@ with toolbar_col2:
         (label for label, mid in AVAILABLE_MODELS.items() if mid == st.session_state.selected_model),
         model_labels[0],
     )
-    with st.popover("⚙️", use_container_width=True):
-        st.caption("Model")
+    with st.popover("⚙️ Settings", use_container_width=True):
+        st.caption("Model Selection")
         chosen_label = st.selectbox(
             "Model", model_labels, index=model_labels.index(current_label),
             label_visibility="collapsed", key="model_picker",
@@ -425,7 +384,7 @@ with toolbar_col2:
         st.session_state.selected_model = AVAILABLE_MODELS[chosen_label]
 
 with toolbar_col3:
-    with st.popover("🎤", use_container_width=True):
+    with st.popover("🎤 Voice", use_container_width=True):
         st.caption("Record a voice message")
         audio_value = st.audio_input("Record a voice message", label_visibility="collapsed")
         if audio_value is not None:
@@ -463,20 +422,14 @@ if st.session_state.pending_files or st.session_state.pending_links:
 
 chat_value = st.chat_input(
     "Ask anything, ask about your documents, or ask for code...",
-    accept_file=False,  # replaced by the custom "+" attach menu above
+    accept_file=False,
 )
-# NOTE: with accept_file=False, chat_input returns a plain str (or None) —
-# not the ChatInputValue object you get with accept_file="multiple"/True.
-# That mismatch (treating it like an object with .text) was the AttributeError.
 if chat_value:
     typed_prompt = chat_value.strip()
     if typed_prompt:
         prompt = typed_prompt
 
 if prompt:
-    # Fold in anything queued via the "+" menu. Images and documents are
-    # handled differently: documents get chunked into the RAG store,
-    # images get sent straight to the vision model as part of this turn.
     image_files = [
         pf for pf in st.session_state.pending_files
         if pf.name.lower().rsplit(".", 1)[-1] in IMAGE_TYPES
@@ -507,10 +460,6 @@ if prompt:
             sources_note = None
 
             if image_files:
-                # Vision turn: build a multimodal message (text + one or
-                # more images) and force the vision-capable model, since
-                # none of the plain text models in AVAILABLE_MODELS can
-                # actually read image content.
                 content_parts = [{"type": "text", "text": prompt}]
                 for img in image_files:
                     content_parts.append(
@@ -520,8 +469,6 @@ if prompt:
                 model_for_this_turn = VISION_MODEL
             else:
                 has_docs = st.session_state.rag_store.has_documents()
-                # Re-read the toggle here (not the stale sidebar-render-time
-                # value) so a file indexed earlier in THIS same run is honored.
                 use_rag = st.session_state.use_rag_toggle
 
                 if use_rag and has_docs:
@@ -539,7 +486,7 @@ if prompt:
 
             placeholder.markdown(reply)
             messages.append({"role": "assistant", "content": reply})
-            st.rerun()  # re-render through the message loop so copy/like/regenerate/run-code show up
+            st.rerun()
 
         except RuntimeError as e:
             placeholder.error(str(e))
