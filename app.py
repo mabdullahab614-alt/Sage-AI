@@ -7,7 +7,7 @@ gen/execution, with multiple saved chats, model selection, and per-message
 actions (copy, regenerate, feedback).
 """
 
-import json
+import base64
 import uuid
 
 import streamlit as st
@@ -62,15 +62,15 @@ def render_message_actions(conv_id: str, idx: int, content: str, is_last: bool) 
 
     cols = st.columns([1, 1, 1, 1, 8]) if is_last else st.columns([1, 1, 1, 8])
 
-    js_text = json.dumps(content)
+    b64 = base64.b64encode(content.encode("utf-8")).decode("ascii")
+    copy_html = (
+        f'<button class="sage-action-btn" title="Copy" data-b64="{b64}" '
+        f"onclick=\"const bytes=Uint8Array.from(atob(this.dataset.b64),c=>c.charCodeAt(0)); "
+        f"navigator.clipboard.writeText(new TextDecoder().decode(bytes)); "
+        f"this.innerText='Copied'; setTimeout(()=&gt;this.innerText='Copy',1200);\">Copy</button>"
+    )
     with cols[0]:
-        st.markdown(
-            f'''<button class="sage-action-btn" title="Copy"
-                onclick="navigator.clipboard.writeText({js_text});
-                         this.innerText='Copied';
-                         setTimeout(()=>this.innerText='Copy',1200);">Copy</button>''',
-            unsafe_allow_html=True,
-        )
+        st.markdown(copy_html, unsafe_allow_html=True)
     with cols[1]:
         label = "Liked" if current_fb == "up" else "Like"
         if st.button(label, key=f"up_{conv_id}_{idx}"):
