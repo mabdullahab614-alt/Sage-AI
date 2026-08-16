@@ -362,6 +362,35 @@ code, pre, .stCodeBlock, [data-testid="stCodeBlock"] {
     background: var(--sage-deep) !important;
 }
 
+/* ---------- Input bar control row (model + mic), docked to chat_input ----------
+   Streamlit's chat_input can't have widgets embedded inside it, so this
+   is a second, adjacent row styled to match — negative margin pulls it
+   flush against the chat box below so the two read as one bar. */
+.st-key-sage_inputbar_controls {
+    margin-bottom: -10px;
+}
+.st-key-sage_inputbar_controls [data-testid="stSelectbox"] > div > div {
+    background: var(--bg-panel-raised) !important;
+    border: 1.5px solid var(--border) !important;
+    border-radius: 10px !important;
+    color: var(--ink) !important;
+    min-height: 2.4rem !important;
+}
+.st-key-sage_inputbar_controls [data-testid="stPopover"] > button {
+    background: var(--bg-panel-raised) !important;
+    border: 1.5px solid var(--border) !important;
+    border-radius: 10px !important;
+    color: var(--ink) !important;
+    min-height: 2.4rem !important;
+    font-size: 1.05rem !important;
+    padding: 0.35rem 0.7rem !important;
+    box-shadow: none !important;
+}
+.st-key-sage_inputbar_controls [data-testid="stPopover"] > button:hover {
+    border-color: var(--sage) !important;
+    background: rgba(143, 174, 124, 0.08) !important;
+}
+
 /* ---------- Divider ---------- */
 hr { border-color: var(--border) !important; }
 
