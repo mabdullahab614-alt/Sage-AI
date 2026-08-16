@@ -251,10 +251,8 @@ def _index_uploaded_file(uf) -> None:
 # embedding arbitrary widgets inside it), but it reads as one unit and
 # everything needed to send a message now lives in this one spot instead
 # of being split off in the sidebar. ----------
-with st.container(key="sage_inputbar_controls"):
-    ctrl_model_col, ctrl_mic_col, ctrl_spacer_col = st.columns([0.42, 0.42, 4.16], gap="small")
-
-    with ctrl_model_col:
+with st.container(key="sage_inputbar_wrapper"):
+    with st.container(key="sage_ctrl_model"):
         model_labels = list(AVAILABLE_MODELS.keys())
         current_label = next(
             (label for label, mid in AVAILABLE_MODELS.items() if mid == st.session_state.selected_model),
@@ -268,7 +266,7 @@ with st.container(key="sage_inputbar_controls"):
             )
             st.session_state.selected_model = AVAILABLE_MODELS[chosen_label]
 
-    with ctrl_mic_col:
+    with st.container(key="sage_ctrl_mic"):
         with st.popover("🎤", use_container_width=True):
             st.caption("Record a voice message")
             audio_value = st.audio_input("Record a voice message", label_visibility="collapsed")
@@ -292,11 +290,11 @@ with st.container(key="sage_inputbar_controls"):
                     except Exception as e:
                         st.error(f"Transcription failed: {e}")
 
-chat_value = st.chat_input(
-    "Ask anything, ask about your documents, or ask for code...",
-    accept_file="multiple",
-    file_type=["pdf", "docx", "xlsx", "xls", "csv", "txt"],
-)
+    chat_value = st.chat_input(
+        "Ask anything, ask about your documents, or ask for code...",
+        accept_file="multiple",
+        file_type=["pdf", "docx", "xlsx", "xls", "csv", "txt"],
+    )
 
 if chat_value:
     for uf in chat_value.files or []:
