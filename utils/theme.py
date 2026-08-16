@@ -188,9 +188,7 @@ html, body, [class*="css"] {
     transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
-/* Send button inside the chat box — pinned to the same 44px square as the
-   model/mic buttons above it (gold instead of sage) so all three controls
-   share one exact size/shape, just color-coded by function. */
+/* Send button inside the chat box */
 [data-testid="stChatInput"] button {
     background: linear-gradient(135deg, var(--gold), var(--gold-deep)) !important;
     color: var(--bg-deep) !important;
@@ -382,61 +380,37 @@ code, pre, .stCodeBlock, [data-testid="stCodeBlock"] {
     background: var(--sage-deep) !important;
 }
 
-/* ---------- Input bar overlay (model + mic floated onto the left edge of
-   the chat box) ----------
-   Streamlit's chat_input can't have widgets embedded inside it, so this
-   fakes it: sage_inputbar_wrapper wraps both the two control buttons and
-   the chat_input itself in one positioning context, then the two
-   st.container(key=...) hooks below are floated absolutely on top of the
-   input's left edge. This depends on internals (exact chat_input padding,
-   how Streamlit lays out a container that holds chat_input) that can't be
-   verified without a live render — if the overlap is off, the fix is
-   nudging the left/bottom px values below to match what actually renders.
-*/
-.st-key-sage_inputbar_wrapper {
-    position: relative !important;
-}
-/* Reserve room on the left of the typed text so it doesn't run under the
-   floated buttons. */
-.st-key-sage_inputbar_wrapper [data-testid="stChatInputTextArea"] {
-    padding-left: 104px !important;
-}
-.st-key-sage_ctrl_model,
-.st-key-sage_ctrl_mic {
-    position: absolute !important;
-    bottom: 10px !important;
-    z-index: 20 !important;
-    width: 44px !important;
-}
-.st-key-sage_ctrl_model { left: 12px !important; }
-.st-key-sage_ctrl_mic   { left: 62px !important; }
-
-.st-key-sage_ctrl_model [data-testid="stPopover"] > button,
-.st-key-sage_ctrl_mic [data-testid="stPopover"] > button {
-    background: linear-gradient(135deg, var(--sage), var(--sage-deep)) !important;
-    color: var(--bg-deep) !important;
-    border: none !important;
+/* ---------- Toolbar row (model + voice popovers, sits above chat input) ----------
+   Replaces the old absolute-positioned overlay hack that tried to float
+   these controls INSIDE the chat_input box. Streamlit's chat_input can't
+   have widgets embedded inside it, so the previous approach depended on
+   unverifiable internals (exact padding, container stacking) and broke
+   in practice (overlapping gold box, cut-off placeholder text).
+   This version just styles two normal st.popover buttons that sit in a
+   plain st.columns() row directly above the input — same visual family
+   (rounded, bordered, sage-accented on hover) but laid out through
+   Streamlit's normal flow, so nothing overlaps or gets clipped. */
+[data-testid="stPopover"] > button {
+    background: var(--bg-panel-raised) !important;
+    color: var(--muted) !important;
+    border: 1px solid var(--border) !important;
     border-radius: 10px !important;
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    padding: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 1.05rem !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
-    transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+    font-weight: 600 !important;
+    font-family: var(--font-body) !important;
+    font-size: 0.82rem !important;
+    padding: 0.35rem 0.7rem !important;
+    height: 38px !important;
+    box-shadow: none !important;
+    transition: border-color 0.16s ease, color 0.16s ease, background 0.16s ease;
 }
-.st-key-sage_ctrl_model [data-testid="stPopover"] > button p,
-.st-key-sage_ctrl_mic [data-testid="stPopover"] > button p {
-    margin: 0 !important;
+[data-testid="stPopover"] > button:hover {
+    border-color: var(--sage) !important;
+    color: var(--sage) !important;
+    background: rgba(143, 174, 124, 0.08) !important;
 }
-.st-key-sage_ctrl_model [data-testid="stPopover"] > button:hover,
-.st-key-sage_ctrl_mic [data-testid="stPopover"] > button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px var(--sage-glow) !important;
-    filter: brightness(1.06);
+[data-testid="stPopover"] > button:focus-visible {
+    outline: 2px solid var(--sage) !important;
+    outline-offset: 2px;
 }
 
 /* ---------- Divider ---------- */
