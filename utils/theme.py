@@ -166,6 +166,7 @@ html, body, [class*="css"] {
     color: var(--bg-deep) !important;
     border: none !important;
     border-radius: 10px !important;
+    white-space: nowrap !important;
     font-weight: 700 !important;
     font-family: var(--font-body) !important;
     letter-spacing: 0.01em;
