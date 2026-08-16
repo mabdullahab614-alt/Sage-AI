@@ -263,18 +263,35 @@ html, body, [class*="css"] {
     min-width: 34px !important;
     max-width: 34px !important;
     padding: 0 !important;
+    margin: 0 !important;
     font-size: 0.85rem !important;
     font-weight: 500 !important;
+    line-height: 1 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     box-shadow: none !important;
     transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
+/* Streamlit wraps the button label in a <div><p> pair that carries its
+   own margin/line-height — that leftover spacing was what pushed the
+   glyph off-center inside the box. Zeroing it out here + centering text
+   on the <p> itself is what actually centers the icon. */
+.sage-chatrow-icon .stButton > button > div {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
 .sage-chatrow-icon .stButton > button p {
     margin: 0 !important;
+    padding: 0 !important;
     line-height: 1 !important;
     font-size: 0.85rem !important;
+    text-align: center !important;
 }
 .sage-chatrow-icon .stButton > button:hover {
     border-color: var(--sage) !important;
