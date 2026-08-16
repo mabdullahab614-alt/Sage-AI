@@ -67,38 +67,45 @@ def regenerate_last_response(conv_id: str) -> None:
 
 
 def render_message_actions(conv_id: str, idx: int, content: str, is_last: bool) -> None:
-    """Copy / thumbs up / thumbs down / regenerate (last message only) row."""
-    fb_key = (conv_id, idx)
-    current_fb = st.session_state.feedback.get(fb_key)
-
-    cols = st.columns(4) if is_last else st.columns(3)
-
+    """Copy button for an assistant message."""
     b64 = base64.b64encode(content.encode("utf-8")).decode("ascii")
     copy_html = (
+        '<div class="sage-msg-actions">'
         f'<button class="sage-action-btn" title="Copy" data-b64="{b64}" '
-        f"onclick=\"const bytes=Uint8Array.from(atob(this.dataset.b64),c=>c.charCodeAt(0)); "
-        f"navigator.clipboard.writeText(new TextDecoder().decode(bytes)); "
-        f"this.innerText='Copied'; setTimeout(()=&gt;this.innerText='Copy',1200);\">Copy</button>"
+        "onclick=\""
+        "const bytes = Uint8Array.from(atob(this.dataset.b64), c => c.charCodeAt(0));"
+        "const text = new TextDecoder().decode(bytes);"
+        "const btn = this;"
+        "function fallbackCopy(t) {"
+        "  const ta = document.createElement('textarea');"
+        "  ta.value = t;"
+        "  ta.style.position = 'fixed';"
+        "  ta.style.left = '-9999px';"
+        "  document.body.appendChild(ta);"
+        "  ta.focus(); ta.select();"
+        "  try { document.execCommand('copy'); } catch (e) {}"
+        "  document.body.removeChild(ta);"
+        "}"
+        # Streamlit renders inside a sandboxed iframe, where
+        # navigator.clipboard.writeText silently fails (no clipboard-write
+        # permission granted to the frame) even though it looks like a
+        # normal button click. That was the whole bug — the fallback
+        # execCommand('copy') path below is what actually works there.
+        "if (navigator.clipboard && navigator.clipboard.writeText) {"
+        "  navigator.clipboard.writeText(text).then(() => {"
+        "    btn.innerText = 'Copied'; setTimeout(() => btn.innerText = 'Copy', 1200);"
+        "  }).catch(() => {"
+        "    fallbackCopy(text);"
+        "    btn.innerText = 'Copied'; setTimeout(() => btn.innerText = 'Copy', 1200);"
+        "  });"
+        "} else {"
+        "  fallbackCopy(text);"
+        "  btn.innerText = 'Copied'; setTimeout(() => btn.innerText = 'Copy', 1200);"
+        "}"
+        "\">Copy</button>"
+        "</div>"
     )
-    with cols[0]:
-        st.markdown(copy_html, unsafe_allow_html=True)
-    with cols[1]:
-        label = "Liked" if current_fb == "up" else "Like"
-        if st.button(label, key=f"up_{conv_id}_{idx}"):
-            st.session_state.feedback[fb_key] = "up"
-            st.toast("Thanks for the feedback.")
-            st.rerun()
-    with cols[2]:
-        label = "Disliked" if current_fb == "down" else "Dislike"
-        if st.button(label, key=f"down_{conv_id}_{idx}"):
-            st.session_state.feedback[fb_key] = "down"
-            st.toast("Thanks — noted.")
-            st.rerun()
-    if is_last:
-        with cols[3]:
-            if st.button("Regenerate", key=f"regen_{conv_id}_{idx}"):
-                regenerate_last_response(conv_id)
-                st.rerun()
+    st.markdown(copy_html, unsafe_allow_html=True)
 
 
 def render_code_run_buttons(code_blocks: list[str], key_prefix: str) -> None:
