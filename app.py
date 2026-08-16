@@ -192,9 +192,8 @@ with st.sidebar:
 
     st.markdown('<p class="sage-eyebrow">Chats</p>', unsafe_allow_html=True)
 
-    # Starred chats float to the top; within each group, most-recent-first.
+    # Most-recent-first.
     chat_items = list(st.session_state.conversations.items())[::-1]
-    chat_items.sort(key=lambda kv: not kv[1].get("starred", False))
 
     for cid, conv in chat_items:
         if st.session_state.renaming_id == cid:
@@ -215,14 +214,7 @@ with st.sidebar:
                     st.rerun()
         else:
             is_active = cid == st.session_state.current_id
-            c_star, c_title, c_rename, c_del = st.columns([0.8, 4, 0.8, 0.8])
-            with c_star:
-                st.markdown('<div class="sage-chatrow-icon">', unsafe_allow_html=True)
-                star_label = "⭐" if conv.get("starred") else "☆"
-                if st.button(star_label, key=f"star_{cid}", help="Star this chat", use_container_width=True):
-                    conv["starred"] = not conv.get("starred", False)
-                    st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
+            c_title, c_rename, c_del = st.columns([4, 0.8, 0.8])
             with c_title:
                 if st.button(
                     conv["title"] or "New chat",
