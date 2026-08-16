@@ -22,6 +22,7 @@ from utils.llm import (
     transcribe_audio,
     AVAILABLE_MODELS,
     DEFAULT_MODEL,
+    VISION_MODEL,
 )
 from utils.code_executor import execute_python
 from utils.theme import inject_theme, render_empty_state, PAGE_TITLE, PAGE_ICON
@@ -293,6 +294,15 @@ for i, msg in enumerate(messages):
 prompt = None
 
 
+def _image_to_data_url(uf) -> str:
+    """Encodes an uploaded image file as a base64 data: URL for Groq's
+    multimodal (vision) message format."""
+    ext = uf.name.lower().rsplit(".", 1)[-1]
+    mime = "image/jpeg" if ext == "jpg" else f"image/{ext}"
+    b64 = base64.b64encode(uf.getvalue()).decode("ascii")
+    return f"data:{mime};base64,{b64}"
+
+
 def _index_uploaded_file(uf) -> None:
     """Parses + indexes one uploaded file into the RAG store."""
     if uf.name in st.session_state.uploaded_filenames:
@@ -429,9 +439,18 @@ if chat_value:
         prompt = typed_prompt
 
 if prompt:
-    # Fold in anything queued via the "+" menu.
-    for pf in st.session_state.pending_files:
+    # Fold in anything queued via the "+" menu. Images and documents are
+    # handled differently: documents get chunked into the RAG store,
+    # images get sent straight to the vision model as part of this turn.
+    image_files = [
+        pf for pf in st.session_state.pending_files
+        if pf.name.lower().rsplit(".", 1)[-1] in IMAGE_TYPES
+    ]
+    doc_files = [pf for pf in st.session_state.pending_files if pf not in image_files]
+
+    for pf in doc_files:
         _index_uploaded_file(pf)
+
     if st.session_state.pending_links:
         links_note = "\n".join(f"🔗 {u}" for u in st.session_state.pending_links)
         prompt = f"{prompt}\n\n{links_note}"
@@ -449,21 +468,36 @@ if prompt:
         placeholder.markdown("🌿 _Thinking..._")
 
         try:
-            has_docs = st.session_state.rag_store.has_documents()
-            # Re-read the toggle here (not the stale sidebar-render-time
-            # value) so a file indexed earlier in THIS same run is honored.
-            use_rag = st.session_state.use_rag_toggle
+            model_for_this_turn = st.session_state.selected_model
+            sources_note = None
 
-            if use_rag and has_docs:
-                hits = st.session_state.rag_store.query(prompt)
-                augmented_prompt = build_rag_prompt(prompt, hits)
-                llm_messages = messages[:-1] + [{"role": "user", "content": augmented_prompt}]
-                sources_note = ", ".join(sorted({h["source"] for h in hits})) if hits else None
+            if image_files:
+                # Vision turn: build a multimodal message (text + one or
+                # more images) and force the vision-capable model, since
+                # none of the plain text models in AVAILABLE_MODELS can
+                # actually read image content.
+                content_parts = [{"type": "text", "text": prompt}]
+                for img in image_files:
+                    content_parts.append(
+                        {"type": "image_url", "image_url": {"url": _image_to_data_url(img)}}
+                    )
+                llm_messages = messages[:-1] + [{"role": "user", "content": content_parts}]
+                model_for_this_turn = VISION_MODEL
             else:
-                llm_messages = messages
-                sources_note = None
+                has_docs = st.session_state.rag_store.has_documents()
+                # Re-read the toggle here (not the stale sidebar-render-time
+                # value) so a file indexed earlier in THIS same run is honored.
+                use_rag = st.session_state.use_rag_toggle
 
-            reply = chat_completion(llm_messages, model=st.session_state.selected_model)
+                if use_rag and has_docs:
+                    hits = st.session_state.rag_store.query(prompt)
+                    augmented_prompt = build_rag_prompt(prompt, hits)
+                    llm_messages = messages[:-1] + [{"role": "user", "content": augmented_prompt}]
+                    sources_note = ", ".join(sorted({h["source"] for h in hits})) if hits else None
+                else:
+                    llm_messages = messages
+
+            reply = chat_completion(llm_messages, model=model_for_this_turn)
 
             if sources_note:
                 reply += f"\n\n*Sources: {sources_note}*"
