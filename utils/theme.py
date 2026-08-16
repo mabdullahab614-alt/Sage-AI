@@ -87,6 +87,18 @@ html, body, [class*="css"] {
     margin-bottom: 0.9rem;
 }
 
+/* Small uppercase section labels used throughout the sidebar (Chats,
+   Model, Documents, Voice input) — was referenced in app.py but never
+   actually styled, so it was falling back to plain paragraph text */
+.sage-eyebrow {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0.6rem 0 0.3rem 0;
+}
+
 /* ---------- Signature leaf: ALWAYS in gentle motion, wherever it appears ---------- */
 .sage-leaf-icon {
     display: inline-block;
@@ -332,6 +344,22 @@ code, pre, .stCodeBlock, [data-testid="stCodeBlock"] {
 [data-testid="stAlert"] {
     border-radius: 12px !important;
     border: 1px solid var(--border) !important;
+}
+
+/* ---------- Voice recorder (st.audio_input) ---------- */
+[data-testid="stAudioInput"] {
+    background: var(--bg-panel-raised) !important;
+    border: 1.5px dashed var(--border) !important;
+    border-radius: 12px !important;
+    padding: 0.4rem 0.7rem !important;
+}
+[data-testid="stAudioInput"] button {
+    background: var(--sage) !important;
+    color: var(--bg-deep) !important;
+    border-radius: 50% !important;
+}
+[data-testid="stAudioInput"] button:hover {
+    background: var(--sage-deep) !important;
 }
 
 /* ---------- Divider ---------- */
