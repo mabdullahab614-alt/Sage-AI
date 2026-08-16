@@ -152,9 +152,9 @@ if "last_audio_hash" not in st.session_state:
 if "renaming_id" not in st.session_state:
     st.session_state.renaming_id = None
 if "pending_files" not in st.session_state:
-    st.session_state.pending_files = []          # list of UploadedFile objects, queued via "+"
+    st.session_state.pending_files = []         # list of UploadedFile objects, queued via "+"
 if "pending_links" not in st.session_state:
-    st.session_state.pending_links = []            # list of url strings, queued via "+"
+    st.session_state.pending_links = []           # list of url strings, queued via "+"
 if "uploader_version" not in st.session_state:
     st.session_state.uploader_version = 0
 if "use_rag_toggle" not in st.session_state:
@@ -329,13 +329,25 @@ def _index_uploaded_file(uf) -> None:
         st.error(f"Couldn't process {uf.name}: {e}")
 
 
-# ---------- Compact Toolbar Row (Mobile & Desktop Optimized) ----------
-toolbar_col1, toolbar_col2, toolbar_col3 = st.columns([1, 1, 1])
+# ---------- Compact Toolbar Row ----------
+st.markdown("""
+<style>
+div[data-testid="column"] {
+    width: fit-content !important;
+    flex: unset !important;
+}
+div[data-testid="column"] + div[data-testid="column"] {
+    flex: unset !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+toolbar_col1, toolbar_col2, toolbar_col3 = st.columns(3)
 
 uv = st.session_state.uploader_version
 
 with toolbar_col1:
-    with st.popover("📎 Attach", use_container_width=True):
+    with st.popover("＋ Attach", use_container_width=True):
         st.caption("Add to this message")
         tab_photo, tab_file, tab_link = st.tabs(["📷 Photo", "📄 File", "🔗 Link"])
 
@@ -375,8 +387,8 @@ with toolbar_col2:
         (label for label, mid in AVAILABLE_MODELS.items() if mid == st.session_state.selected_model),
         model_labels[0],
     )
-    with st.popover("⚙️ Settings", use_container_width=True):
-        st.caption("Model Selection")
+    with st.popover("⚙️ Model", use_container_width=True):
+        st.caption("Model")
         chosen_label = st.selectbox(
             "Model", model_labels, index=model_labels.index(current_label),
             label_visibility="collapsed", key="model_picker",
