@@ -168,12 +168,11 @@ with st.sidebar:
 
     st.divider()
 
-    # Model picker and document upload used to live here — both moved down
-    # to the control row right above the chat box (see bottom of file),
-    # next to the "+" attach button and mic, so everything needed to send
-    # a message lives in one place instead of being split across the page.
-    # The indexed-files list and "Clear documents" stay here since this is
-    # a status/management view, not an input control.
+    # Model picker and voice input now live in a toolbar row directly above
+    # the chat box (see bottom of file) instead of the sidebar, so everything
+    # needed to send a message lives in one place. The indexed-files list and
+    # "Clear documents" stay here since this is a status/management view, not
+    # an input control.
     if st.session_state.uploaded_filenames:
         st.markdown('<p class="sage-eyebrow">Indexed documents</p>', unsafe_allow_html=True)
         for fn in st.session_state.uploaded_filenames:
@@ -243,58 +242,59 @@ def _index_uploaded_file(uf) -> None:
         st.error(f"Couldn't process {uf.name}: {e}")
 
 
-# ---------- Compact control row (model + voice), docked right above the
-# chat box — this plus the box's own built-in "+" attach button below is
-# the closest a pure-Streamlit chat_input can get to a single fused input
-# bar like Claude's. It's two adjacent, CSS-matched elements rather than
-# one literal HTML control (Streamlit's chat_input doesn't support
-# embedding arbitrary widgets inside it), but it reads as one unit and
-# everything needed to send a message now lives in this one spot instead
-# of being split off in the sidebar. ----------
-with st.container(key="sage_inputbar_wrapper"):
-    with st.container(key="sage_ctrl_model"):
-        model_labels = list(AVAILABLE_MODELS.keys())
-        current_label = next(
-            (label for label, mid in AVAILABLE_MODELS.items() if mid == st.session_state.selected_model),
-            model_labels[0],
-        )
-        with st.popover("⚙️", use_container_width=True):
-            st.caption("Model")
-            chosen_label = st.selectbox(
-                "Model", model_labels, index=model_labels.index(current_label),
-                label_visibility="collapsed", key="model_picker",
-            )
-            st.session_state.selected_model = AVAILABLE_MODELS[chosen_label]
+# ---------- Toolbar row (model + voice), docked directly above the chat
+# box. Previously these were force-positioned INSIDE the chat_input via
+# absolute CSS — a fragile hack that depended on unverifiable Streamlit
+# internals and broke visually (overlapping gold box, clipped placeholder
+# text). This is the robust version: two plain st.popover buttons laid out
+# in a normal st.columns() row, styled to match the app's look. Nothing
+# overlaps, nothing depends on guessed pixel offsets, and it still reads
+# as "everything needed to send a message lives in one place." ----------
+toolbar_col1, toolbar_col2, toolbar_spacer = st.columns([0.09, 0.09, 0.82])
 
-    with st.container(key="sage_ctrl_mic"):
-        with st.popover("🎤", use_container_width=True):
-            st.caption("Record a voice message")
-            audio_value = st.audio_input("Record a voice message", label_visibility="collapsed")
-            if audio_value is not None:
-                audio_bytes = audio_value.getvalue()
-                audio_hash = hashlib.md5(audio_bytes).hexdigest()
-                if audio_hash != st.session_state.last_audio_hash:
-                    st.session_state.last_audio_hash = audio_hash
-                    try:
-                        with st.spinner("Transcribing your voice message..."):
-                            transcribed = transcribe_audio(
-                                audio_bytes, filename=getattr(audio_value, "name", "voice.wav")
-                            )
-                        transcribed = (transcribed or "").strip()
-                        if transcribed:
-                            prompt = transcribed
-                        else:
-                            st.warning("Didn't catch any speech in that recording — try again.")
-                    except RuntimeError as e:
-                        st.error(str(e))
-                    except Exception as e:
-                        st.error(f"Transcription failed: {e}")
-
-    chat_value = st.chat_input(
-        "Ask anything, ask about your documents, or ask for code...",
-        accept_file="multiple",
-        file_type=["pdf", "docx", "xlsx", "xls", "csv", "txt"],
+with toolbar_col1:
+    model_labels = list(AVAILABLE_MODELS.keys())
+    current_label = next(
+        (label for label, mid in AVAILABLE_MODELS.items() if mid == st.session_state.selected_model),
+        model_labels[0],
     )
+    with st.popover("⚙️ Model", use_container_width=True):
+        st.caption("Model")
+        chosen_label = st.selectbox(
+            "Model", model_labels, index=model_labels.index(current_label),
+            label_visibility="collapsed", key="model_picker",
+        )
+        st.session_state.selected_model = AVAILABLE_MODELS[chosen_label]
+
+with toolbar_col2:
+    with st.popover("🎤 Voice", use_container_width=True):
+        st.caption("Record a voice message")
+        audio_value = st.audio_input("Record a voice message", label_visibility="collapsed")
+        if audio_value is not None:
+            audio_bytes = audio_value.getvalue()
+            audio_hash = hashlib.md5(audio_bytes).hexdigest()
+            if audio_hash != st.session_state.last_audio_hash:
+                st.session_state.last_audio_hash = audio_hash
+                try:
+                    with st.spinner("Transcribing your voice message..."):
+                        transcribed = transcribe_audio(
+                            audio_bytes, filename=getattr(audio_value, "name", "voice.wav")
+                        )
+                    transcribed = (transcribed or "").strip()
+                    if transcribed:
+                        prompt = transcribed
+                    else:
+                        st.warning("Didn't catch any speech in that recording — try again.")
+                except RuntimeError as e:
+                    st.error(str(e))
+                except Exception as e:
+                    st.error(f"Transcription failed: {e}")
+
+chat_value = st.chat_input(
+    "Ask anything, ask about your documents, or ask for code...",
+    accept_file="multiple",
+    file_type=["pdf", "docx", "xlsx", "xls", "csv", "txt"],
+)
 
 if chat_value:
     for uf in chat_value.files or []:
