@@ -385,9 +385,11 @@ chat_value = st.chat_input(
     "Ask anything, ask about your documents, or ask for code...",
     accept_file=False,  # replaced by the custom "+" attach menu above
 )
-
+# NOTE: with accept_file=False, chat_input returns a plain str (or None) —
+# not the ChatInputValue object you get with accept_file="multiple"/True.
+# That mismatch (treating it like an object with .text) was the AttributeError.
 if chat_value:
-    typed_prompt = (chat_value.text or "").strip()
+    typed_prompt = chat_value.strip()
     if typed_prompt:
         prompt = typed_prompt
 
