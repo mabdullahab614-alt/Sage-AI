@@ -5,14 +5,19 @@ Thin wrapper around the Groq API for chat + code generation.
 import os
 from groq import Groq
 
-# Groq-hosted models available for selection in the UI. If Groq retires or
-# renames a model, update this list — the app will surface Groq's own error
-# message if a stale model id is selected, it won't fail silently.
+# Groq-hosted models available for selection in the UI. Verified against
+# Groq's own "Production Models" list (console.groq.com/docs/models) — only
+# models that appear there are included. llama3-70b-8192 and gemma2-9b-it
+# were removed from that list (retired) and are deliberately NOT offered
+# here; openai/gpt-oss-120b and openai/gpt-oss-20b are their current
+# production-tier replacements. If Groq retires or renames a model, update
+# this list — the app will surface Groq's own error message if a stale
+# model id is selected, it won't fail silently.
 AVAILABLE_MODELS = {
     "Llama 3.3 70B — best all-round (default)": "llama-3.3-70b-versatile",
     "Llama 3.1 8B — fastest": "llama-3.1-8b-instant",
-    "Llama 3 70B": "llama3-70b-8192",
-    "Gemma 2 9B": "gemma2-9b-it",
+    "GPT-OSS 120B — OpenAI open-weight, reasoning": "openai/gpt-oss-120b",
+    "GPT-OSS 20B — OpenAI open-weight, fast": "openai/gpt-oss-20b",
 }
 DEFAULT_MODEL = "llama-3.3-70b-versatile"
 
