@@ -28,7 +28,10 @@ if "uploaded_filenames" not in st.session_state:
 
 # ---------- Sidebar: document upload ----------
 with st.sidebar:
-    st.markdown("### 🌿 Sage AI")
+    st.markdown(
+        '<h3><span class="sage-leaf-icon">🌿</span> Sage AI</h3>',
+        unsafe_allow_html=True,
+    )
     st.write("")
 
     st.markdown('<p class="sage-eyebrow">Documents</p>', unsafe_allow_html=True)
