@@ -58,6 +58,23 @@ def chat_completion(messages: list[dict], model: str = DEFAULT_MODEL, temperatur
     return response.choices[0].message.content
 
 
+def transcribe_audio(audio_bytes: bytes, filename: str = "voice.wav") -> str:
+    """
+    Sends recorded audio to Groq's hosted Whisper model and returns the
+    transcribed text. Accepts mp3/mp4/mpeg/mpga/m4a/wav/webm, up to 25MB —
+    exactly what Streamlit's st.audio_input records, so no conversion needed.
+    """
+    client = get_client()
+    transcription = client.audio.transcriptions.create(
+        file=(filename, audio_bytes),
+        model="whisper-large-v3-turbo",
+        response_format="text",
+    )
+    # response_format="text" returns a plain string in the Groq SDK; guard
+    # for SDK versions that might still hand back an object with .text.
+    return transcription if isinstance(transcription, str) else transcription.text
+
+
 def extract_python_code_blocks(text: str) -> list[str]:
     """Pulls out ```python ... ``` blocks from a model response."""
     import re
