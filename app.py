@@ -1,5 +1,7 @@
 """
 Sage AI — Intelligent Document & Code Assistant
+Built by Abdullah Javed.
+
 Single-page Streamlit app: general chat + RAG over uploaded docs + code gen/execution.
 """
 
@@ -9,12 +11,10 @@ from utils.document_parser import parse_document, UnsupportedFileTypeError, Empt
 from utils.rag import RAGStore, build_rag_prompt
 from utils.llm import chat_completion, extract_python_code_blocks
 from utils.code_executor import execute_python
-from utils.theme import inject_theme, render_header, render_hero, render_footer
+from utils.theme import inject_theme, render_empty_state, PAGE_TITLE, PAGE_ICON
 
-st.set_page_config(page_title="Sage AI", page_icon="🌿", layout="wide")
-
-inject_theme()
-render_header()
+st.set_page_config(page_title=PAGE_TITLE, page_icon=PAGE_ICON, layout="wide")
+inject_theme(st)
 
 
 # ---------- Session state ----------
@@ -28,14 +28,15 @@ if "uploaded_filenames" not in st.session_state:
 
 # ---------- Sidebar: document upload ----------
 with st.sidebar:
-    st.title("Sage AI")
-    st.caption("Chat · Documents (RAG) · Code")
+    st.markdown("### 🌿 Sage AI")
+    st.write("")
 
-    st.subheader("Upload documents")
+    st.markdown('<p class="sage-eyebrow">Documents</p>', unsafe_allow_html=True)
     uploaded_files = st.file_uploader(
         "PDF, Word, Excel, CSV, or TXT",
         type=["pdf", "docx", "xlsx", "xls", "csv", "txt"],
         accept_multiple_files=True,
+        label_visibility="collapsed",
     )
 
     if uploaded_files:
@@ -43,25 +44,25 @@ with st.sidebar:
             if uf.name in st.session_state.uploaded_filenames:
                 continue
             try:
-                with st.spinner(f"Parsing {uf.name}..."):
+                with st.spinner(f"Reading {uf.name}..."):
                     parsed = parse_document(uf)
                     num_chunks = st.session_state.rag_store.add_document(
                         parsed["filename"], parsed["text"]
                     )
                 st.session_state.uploaded_filenames.append(uf.name)
-                st.success(f"{uf.name} — {num_chunks} chunks indexed")
+                st.success(f"{uf.name} indexed — {num_chunks} chunks ready")
             except UnsupportedFileTypeError as e:
                 st.error(str(e))
             except EmptyDocumentError as e:
                 st.warning(str(e))
             except Exception as e:
-                st.error(f"Failed to process {uf.name}: {e}")
+                st.error(f"Couldn't process {uf.name}: {e}")
 
     if st.session_state.uploaded_filenames:
-        st.markdown("**Indexed documents:**")
+        st.markdown('<p class="sage-eyebrow" style="margin-top:0.8rem;">Indexed</p>', unsafe_allow_html=True)
         for fn in st.session_state.uploaded_filenames:
-            st.markdown(f"- {fn}")
-        if st.button("Clear documents"):
+            st.markdown(f"📄 {fn}")
+        if st.button("Clear documents", use_container_width=True):
             st.session_state.rag_store.clear()
             st.session_state.uploaded_filenames = []
             st.rerun()
@@ -74,14 +75,14 @@ with st.sidebar:
     )
 
     st.divider()
-    if st.button("Clear conversation"):
+    if st.button("Clear conversation", use_container_width=True):
         st.session_state.messages = []
         st.rerun()
 
 
 # ---------- Main chat area ----------
 if not st.session_state.messages:
-    render_hero()
+    render_empty_state(st)
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
@@ -91,7 +92,7 @@ for msg in st.session_state.messages:
             code_blocks = extract_python_code_blocks(msg["content"])
             for i, code in enumerate(code_blocks):
                 key = f"run_{id(msg)}_{i}"
-                if st.button(f"▶️ Run code block {i + 1}", key=key):
+                if st.button(f"▶ Run code block {i + 1}", key=key):
                     with st.spinner("Executing..."):
                         result = execute_python(code)
                     if result["success"]:
@@ -108,7 +109,7 @@ if prompt:
 
     with st.chat_message("assistant"):
         placeholder = st.empty()
-        placeholder.markdown("Thinking...")
+        placeholder.markdown("🌿 _Thinking..._")
 
         try:
             has_docs = st.session_state.rag_store.has_documents()
@@ -133,7 +134,7 @@ if prompt:
 
             code_blocks = extract_python_code_blocks(reply)
             for i, code in enumerate(code_blocks):
-                if st.button(f"▶️ Run code block {i + 1}", key=f"run_new_{i}"):
+                if st.button(f"▶ Run code block {i + 1}", key=f"run_new_{i}"):
                     with st.spinner("Executing..."):
                         result = execute_python(code)
                     if result["success"]:
@@ -147,5 +148,3 @@ if prompt:
             placeholder.error(str(e))
         except Exception as e:
             placeholder.error(f"Something went wrong: {e}")
-
-render_footer()
