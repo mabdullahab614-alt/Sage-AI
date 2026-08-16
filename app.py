@@ -226,7 +226,7 @@ with st.sidebar:
                     st.rerun()
             with c_rename:
                 st.markdown('<div class="sage-chatrow-icon">', unsafe_allow_html=True)
-                if st.button("✏️", key=f"ren_{cid}", help="Rename this chat", use_container_width=True):
+                if st.button("✎", key=f"ren_{cid}", help="Rename this chat", use_container_width=True):
                     st.session_state.renaming_id = cid
                     st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
