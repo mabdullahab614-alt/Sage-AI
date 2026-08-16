@@ -353,6 +353,46 @@ hr { border-color: var(--border) !important; }
 }
 .sage-footer a:hover { text-decoration: underline; }
 
+/* ---------- New chat-history sidebar list (added for multi-conversation support) ---------- */
+.sage-chat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.15rem;
+}
+.sage-chat-item.active {
+    background: rgba(143, 174, 124, 0.12);
+    color: var(--sage) !important;
+    border: 1px solid var(--border);
+}
+
+/* ---------- Message action row (copy / regenerate / feedback) ---------- */
+.sage-msg-actions {
+    display: flex;
+    gap: 0.4rem;
+    margin: 0.2rem 0 0.6rem 0.2rem;
+}
+.sage-action-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 0.22rem 0.6rem;
+    font-size: 0.76rem;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.sage-action-btn:hover {
+    color: var(--sage);
+    border-color: var(--sage);
+    background: rgba(143, 174, 124, 0.08);
+}
+
 /* ---------- Respect reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
     .sage-leaf-icon,
